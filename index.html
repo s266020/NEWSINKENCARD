@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>オンライン神経衰弱</title>
+    <style>
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 8px;
+            padding: 10px;
+        }
+
+        .card {
+            aspect-ratio: 5 / 7;
+            width: 100%;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: black;
+            cursor: pointer;
+        }
+
+        .flipped {
+            background-color: white;
+        }
+
+        .score-board {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .effect-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+
+        .effect-modal img {
+            width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .effect-modal.hidden {
+            display: none;
+        }
+
+        #effectText {
+            font-size: 32px;
+            /* 文字を大きく */
+            color: #00aaff;
+            /* 青系のカラーに */
+            text-align: center;
+            /* 中央揃え */
+            font-weight: bold;
+            /* 太字にして見やすく */
+            margin-top: 10px;
+            /* 画像との余白 */
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .start-menu {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+
+
+
+        #gameBoard,
+        .score-board,
+        .current-Player {
+            display: none;
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+
+    <!-- ゲーム参加画面 -->
+    <div id="joinGameSection">
+        <h2>ゲームに参加</h2>
+        <input type="text" id="gameIdInput" placeholder="ゲームIDを入力">
+        <button onclick="joinGame()">次へ</button>
+    </div>
+
+    <!-- 名前入力 -->
+    <div id="nameInputSection" style="display:none;">
+        <h2>プレイヤー名を入力</h2>
+        <input type="text" id="playerNameInput" placeholder="名前">
+        <button onclick="enterLobby()">ロビーに参加</button>
+    </div>
+
+    <!-- ロビー -->
+    <div id="lobbySection" style="display:none;">
+        <h2>待機中のプレイヤー</h2>
+        <ul id="playerList"></ul>
+        <button id="startGameBtn" onclick="startGameInLobby()" disabled>ゲーム開始</button>
+    </div>
+    <div id="gameIdDisplay" style="margin-top: 10px; font-size: 18px; font-weight: bold;"></div>
+
+
+    <!-- ゲーム画面 -->
+    <div class="current-Player">
+        <div id="currentPlayer"></div>
+    </div>
+    <div class="game-board" id="gameBoard"></div>
+    <div class="score-board">
+        <div id="scores"></div>
+    </div>
+    <div id="gameOverModal" class="modal">
+        <div class="modal-content">
+            <h2>ゲーム終了！</h2>
+            <p id="finalScore"></p>
+            <button onclick="restartGame()">もう一度プレイ</button>
+            <button onclick="exitGame()">終了</button>
+        </div>
+    </div>
+    <div id="effectModal" class="effect-modal hidden">
+        <img id="effectImage" src="" alt="Card Image" />
+        <div id="effectText"></div>
+    </div>
+
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvjSDUh-IaCZQ17bE3Q4IfI0yZDqbDcz0",
+            authDomain: "flipcards-5ca31.firebaseapp.com",
+            projectId: "flipcards-5ca31",
+            storageBucket: "flipcards-5ca31.appspot.com",
+            messagingSenderId: "599139871804",
+            appId: "1:599139871804:web:5402c51a0acfd75cd36739",
+            measurementId: "G-KB8ZCG0HG8"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let gameId = "";
+        let playerName = "";
+        let myplayerName = "";
+        let currentPlayer = 1;
+        let PName = {};
+        let numPlayers = 0;
+        let playerId = "";
+        let skipdata = 0;
+        let cards = [
+            "1", "1", "1", "1", "1", "1", "2", "2", "2", "2", "3", "3",
+            "heart", "heart", "heart", "heart", "heart", "heart", "heart", "heart",
+            "crowbar", "crowbar", "crowbar", "crowbar", "crowbar", "crowbar", "crowbar", "crowbar",
+            "bomb", "bomb", "special", "special", "skip", "skip", "skip", "skip",
+            "devil", "devil", "devil", "devil", "angel", "angel", "angel", "angel",
+            "thief", "thief", "king", "king", "revo", "revo"
+        ];
+
+        const cardImages = {
+            "bomb": "bomb.png",
+            "special": "special.png",
+            "skip": "skip.png",
+            "devil": "devil.png",
+            "angel": "angel.png",
+            "thief": "thief.png",
+            "king": "king.png",
+            "revo": "revo.png",
+            "heart": "heart.png",
+            "crowbar": "crowbar.png",
+            "karaage": "karaage.png",
+            "1": "1.png",
+            "2": "2.png",
+            "3": "3.png",
+
+        };
+        let isThiefMode = false;        // 泥棒効果中かどうか
+        let resolveThiefSelect = null;
+        let selectedThiefIndex = null;
+
+        const specialTypes = ["heart", "crowbar"];
+        const originalCardImages = {
+            heart: "heart.png",
+            crowbar: "crowbar.png",
+        };
+        let selectedspecialIndex = null;
+        let originalSpecialCards = []; // 元の状態保存用
+        let isKaraageMode = false;
+
+        let scores = {};
+        let flippedCards = [];
+
+        function joinGame() {
+            gameId = document.getElementById("gameIdInput").value.trim();
+            if (!gameId) return alert("ゲームIDを入力してください");
+            document.getElementById("joinGameSection").style.display = "none";
+            document.getElementById("nameInputSection").style.display = "block";
+        }
+
+        async function enterLobby() {
+            playerName = document.getElementById("playerNameInput").value.trim();
+            if (!playerName) return alert("名前を入力してください");
+
+            playerId = `player_${Date.now()}`;
+            await db.collection("games").doc(gameId).set({ started: false }, { merge: true });
+            await db.collection("games").doc(gameId).collection("players").doc(playerId).set({
+                name: playerName,
+            });
+
+            document.getElementById("nameInputSection").style.display = "none";
+            document.getElementById("lobbySection").style.display = "block";
+
+            listenToLobby();
+        }
+
+        function listenToLobby() {
+            const playerListEl = document.getElementById("playerList");
+            document.getElementById("gameIdDisplay").textContent = `ゲームID: ${gameId}`;
+            db.collection("games").doc(gameId).collection("players").onSnapshot(snapshot => {
+                playerListEl.innerHTML = "";
+                numPlayers = snapshot.size;
+                snapshot.forEach(doc => {
+                    const li = document.createElement("li");
+                    li.textContent = doc.data().name;
+                    playerListEl.appendChild(li);
+                });
+                if (numPlayers >= 1) {
+                    document.getElementById("startGameBtn").disabled = false;
+                }
+            });
+
+            db.collection("games").doc(gameId).onSnapshot(doc => {
+                if (doc.data().started) {
+                    startGame();
+                }
+            });
+        }
+
+        async function startGameInLobby() {
+            shuffle(cards);
+            const playerSnapshot = await db.collection("games").doc(gameId).collection("players").get();
+            let scoresObj = {};
+            let Name = {};
+            let index = 1;
+            playerSnapshot.forEach(doc => {
+                const name = doc.data().name;
+                scoresObj[index] = 0;
+                Name[index] = name;
+                index++;
+            });
+
+            await db.collection("games").doc(gameId).set({
+                cards,
+                currentPlayer: 1,
+                PName: Name,
+                scores: scoresObj,
+                flipped: [],
+                matchedIndices: [],
+                skippedPlayers: [],
+                started: true
+            }, { merge: true });
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function startGame() {
+            document.getElementById("lobbySection").style.display = "none";
+            document.getElementById("gameIdDisplay").style.display = "none";
+            document.getElementById("gameBoard").style.display = "grid";
+            document.querySelector(".score-board").style.display = "block";
+            document.querySelector(".current-Player").style.display = "block";
+
+            listenToGameState();
+        }
+
+        let gameStateUnsubscribe = null;
+        function listenToGameState() {
+            if (gameStateUnsubscribe) return;
+            gameStateUnsubscribe = db.collection("games").doc(gameId).onSnapshot(doc => {
+                const data = doc.data();
+                if (!data) return;
+                cards = data.cards;
+                PName = data.Pname;
+                scores = data.scores;
+                currentPlayer = data.currentPlayer;
+                flippedCards = data.flipped;
+
+
+                renderBoard(flippedCards);
+                updateSP();
+            });
+        }
+
+        function renderBoard(flipped) {
+            const gameBoard = document.getElementById("gameBoard");
+            const scoreBoard = document.getElementById("scores"); // ← 追加
+            gameBoard.innerHTML = "";
+            scoreBoard.innerHTML = ""; // ← スコアも消す
+
+            const img = document.createElement("img");
+
+
+            db.collection("games").doc(gameId).get().then(doc => {
+                const data = doc.data();
+                const matched = data.matchedIndices || [];
+                const scores = data.scores || {};
+                const currentPlayerNum = data.currentPlayer;
+                const PName = data.PName;
+                const myplayerName = PName[currentPlayerNum];
+
+                // --- カード描画部分 ---
+
+
+
+
+                cards.forEach((value, index) => {
+                    const card = document.createElement("div");
+                    card.className = "card";
+                    card.dataset.index = index;
+                    card.dataset.value = value;
+
+                    if (flipped.includes(index) || matched.includes(index)) {
+                        card.classList.add("flipped");
+                        const img = document.createElement("img");
+                        const src = cardImages[value];
+                        if (src) {
+                            img.src = `./${src}`;
+                            img.alt = value; // 画像が読み込めないときの代替テキスト
+                            img.style.width = "100%"; // 必要に応じてサイズ調整
+                            img.style.height = "100%";
+                            card.appendChild(img);
+                        }
+
+                    } else {
+                    }
+
+                    if (playerName === myplayerName &&
+                        !matched.includes(index) &&
+                        !flipped.includes(index)) {
+                        card.addEventListener("click", () => handleCardClick(card));
+                    }
+
+                    gameBoard.appendChild(card);
+                });
+            });
+        }
+
+
+        let isProcessing = false;
+
+        async function handleCardClick(card) {
+            if (isProcessing) return; // ロック中なら何もしない
+            isProcessing = true;
+            const index = parseInt(card.dataset.index);
+            const doc = await db.collection("games").doc(gameId).get();  // ゲームドキュメントを取得
+            const data = doc.data();
+            const matched = data.matchedIndices || [];
+
+            // 泥棒効果中なら特別な処理
+            if (isThiefMode) {
+                console.log(348)
+                const index = parseInt(card.dataset.index);
+
+                // 表 or matchedカードは無視
+                if (data.flipped.includes(index) || matched.includes(index)) return;
+
+                selectedThiefIndex = index; // 👈 プレイヤーが選んだ index を保存
+                const newFlipped = [...data.flipped, index];
+                await db.collection("games").doc(gameId).update({ flipped: newFlipped });
+
+                if (resolveThiefSelect) resolveThiefSelect(); // 👈 Promise を解決
+                return;
+            }
+            if (isKaraageMode) {
+                console.log(348)
+                const index = parseInt(card.dataset.index);
+                // 表 or match
+                // カードは無視
+                if (data.flipped.includes(index) || matched.includes(index)) return;
+
+                selectedspecialIndex = index; // 👈 プレイヤーが選んだ index を保存
+                const newFlipped = [...data.flipped, index];
+                await db.collection("games").doc(gameId).update({ flipped: newFlipped });
+
+                if (resolveThiefSelect) resolveThiefSelect(); // 👈 Promise を解決
+                return;
+            }
+
+            data.flipped.push(index);
+            await bombeffect(index, data, gameId, cards);
+
+            await db.collection("games").doc(gameId).update({ flipped: data.flipped });
+
+            if (data.flipped.length === 2) {
+                const card1 = cards[data.flipped[0]];
+                const card2 = cards[data.flipped[1]];
+                console.log("flipped indexes:", data.flipped);
+                console.log("card1:", card1, "card2:", card2);
+
+                if (card1 === card2) {
+                    showCardEffect(card1);
+                    await triggerCardEffect(card1, data);
+                    const docment = await db.collection("games").doc(gameId).get();  // ゲームドキュメントを取得
+                    const updata = docment.data(); // 通常の一致したカード名を渡す
+                    const newMatched = [...(updata.matchedIndices || []), ...updata.flipped];
+                    const nextPlayer = await getNextPlayer(currentPlayer, numPlayers, data, gameId);
+                    await db.collection("games").doc(gameId).update({
+                        currentPlayer: nextPlayer,
+                        scores: scores,
+                        flipped: [],
+                        matchedIndices: newMatched
+                    });
+                    await checkGameOver();
+                    isProcessing = false;
+                } else {
+                    setTimeout(async () => {
+                        const nextPlayer = await getNextPlayer(currentPlayer, numPlayers, data, gameId);
+                        await db.collection("games").doc(gameId).update({
+                            currentPlayer: nextPlayer,
+                            flipped: []
+                        });
+
+                        isProcessing = false;
+                    }, 1000);
+                }
+            } else {
+                isProcessing = false;
+            }
+        }
+
+
+
+        async function bombeffect(index, data, gameId, cards) {
+            scores[currentPlayer] = 0;
+            if (cards[index] === "bomb") {
+                const matched = data.matchedIndices || [];
+
+                // 他の未発見のbombを探して追加
+                const additionalFlips = cards
+                    .map((val, idx) => ({ val, idx }))
+                    .filter(obj => obj.val === "bomb" && !data.flipped.includes(obj.idx) && !matched.includes(obj.idx))
+                    .map(obj => obj.idx);
+
+                data.flipped.push(...additionalFlips);
+
+                // 3枚めくられた場合、最初のカード（非bomb）を裏返す
+                if (data.flipped.length === 3) {
+                    data.flipped.splice(0, 1); // 最初の1枚を削除
+
+                    await db.collection("games").doc(gameId).update({
+                        flipped: data.flipped,
+                        scores: scores,
+                    });
+
+                    console.log("新しい flipped 配列:", data.flipped);
+                } else {
+                    // 必要なら他のロジックを書く
+                }
+            }
+        }
+        async function getNextPlayer(currentPlayer, numPlayers, data, gameId) {
+            let next = currentPlayer;
+            do {
+                next = next % numPlayers + 1;
+                console.log("ターン", next);
+                const gameDoc = await db.collection("games").doc(gameId).get();
+                const updatedData = gameDoc.data();
+                const skippedPlayers = updatedData.skippedPlayers || [];
+
+                if (skippedPlayers.includes(next)) {
+                    if (Math.random() < 0.8) {
+                        // FirebaseのDBからも削除
+                        await db.collection("games").doc(gameId).update({
+                            skippedPlayers: firebase.firestore.FieldValue.arrayRemove(next)
+                        });
+                    }
+                    else {
+
+                    }
+
+                    // 次のプレイヤーを探すため continue
+                    continue;
+                }
+
+                break; // スキップ対象でない場合はループ終了
+
+            } while (true);
+            return next;  // 次のプレイヤーを返す
+
+        }
+
+        async function thiefEffect() {
+            const doc = await db.collection("games").doc(gameId).get();
+            const data = doc.data();
+            const matched = data.matchedIndices || [];
+
+            const flipped = [...data.flipped];
+            const val1 = cards[selectedThiefIndex];
+
+            // 選んだカードがまだflippedに入ってなければ追加
+            if (!flipped.includes(selectedThiefIndex)) {
+                flipped.push(selectedThiefIndex);
+            }
+
+            // 一致する support を探す
+            const supportIndices = cards
+                .map((val, idx) => ({ val, idx }))
+                .filter(obj =>
+                    obj.val === val1 &&
+                    !flipped.includes(obj.idx) &&
+                    !matched.includes(obj.idx)
+                )
+                .slice(0, 1);
+
+            flipped.push(...supportIndices.map(obj => obj.idx));
+            isProcessing = false;
+            try {
+                await db.collection("games").doc(gameId).update({
+                    flipped: flipped,
+                });
+                console.log("Flipped by thiefEffect:", flipped);
+            } catch (error) {
+                console.error("Firestore 更新エラー:", error);
+            }
+        }
+        async function specialEffect() {
+            const doc = await db.collection("games").doc(gameId).get();
+            const data = doc.data();
+            const matched = [...(data.matchedIndices || []), ...data.flipped];
+            const flipped = [...data.flipped];
+            const val1 = cards[selectedspecialIndex];
+            const specialHiddenCards = cards
+                .map((val, idx) => ({ val, idx })) // val: カードの種類, idx: 位置
+                .filter(obj =>
+                    specialTypes.includes(obj.val) &&
+                    !data.flipped.includes(obj.idx) && // 表になっていない
+                    !(data.matchedIndices || []).includes(obj.idx) // すでにペアになっていない
+                );
+            specialTypes.forEach(type => {
+                const hasUnflippedUnmatchedCard = cards.some((val, idx) =>
+                    val === type &&
+                    !data.flipped.includes(idx) &&
+                    !(data.matchedIndices || []).includes(idx)
+                );
+
+                if (hasUnflippedUnmatchedCard) {
+                    cardImages[type] = "karaage.png";
+                }
+            });
+
+            if (!flipped.includes(selectedspecialIndex)) {
+                flipped.push(selectedspecialIndex);
+            }
+            const isSpecialCardSelected = specialHiddenCards.some(obj => obj.val === val1);
+            if (isSpecialCardSelected) {
+                const supportIndices = cards
+                    .map((val, idx) => ({ val, idx }))
+                    .filter(obj =>
+                        obj.val === val1 &&
+                        !flipped.includes(obj.idx) &&
+                        !matched.includes(obj.idx)
+                    )
+                    .slice(0, 1);
+                flipped.push(...supportIndices.map(obj => obj.idx));
+                scores[currentPlayer]++;
+                await db.collection("games").doc(gameId).update({
+                    flipped: flipped,
+                    matchedIndices: matched,
+                    scores: scores
+                });
+                isProcessing = false;
+                isKaraageMode = true;
+                await new Promise(resolve => {
+                    resolveThiefSelect = resolve;
+                });
+                await specialEffect();
+            } else {
+                flipped.pop();
+                specialTypes.forEach(type => {
+                    // もしそのカードが karaage.png になっている場合、元のカードに戻す
+                    if (cardImages[type] === "karaage.png") {
+                        // 元の画像に戻す（例えば "original.png" と仮定）
+                        cardImages[type] = `${type}.png`; // typeに基づいた元の画像ファイル名
+                    }
+                });
+                // 1秒待つ（1000ミリ秒）
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                const nextPlayer = await getNextPlayer(currentPlayer, numPlayers, data, gameId);
+                await db.collection("games").doc(gameId).update({
+                    flipped: flipped,
+                    cardImages: cardImages
+                });
+                isProcessing = false;
+                isKaraageMode = false;
+            }
+
+        }
+
+        async function triggerCardEffect(card1, data, index) {
+
+            switch (card1) {
+                case "heart":
+                    scores[currentPlayer]++;
+                    break;
+                case "crowbar":
+                    scores[currentPlayer]++;
+                    break;
+                case "1":
+                    scores[currentPlayer]++;
+                    break;
+                case "2":
+                    scores[currentPlayer] += 2;
+                    break;
+                case "3":
+                    scores[currentPlayer] += 3;
+                    break;
+                case "angel":
+                    console.log("得点", scores[currentPlayer])
+                    scores[currentPlayer] += 4;
+                    console.log("得点", scores[currentPlayer])
+                    break;
+                case "devil": {
+                    const random = Math.random(); // 0〜1のランダムな数（0.5未満なら前者、0.5以上なら後者）
+
+                    if (random < 0.5) {
+                        // スコアを -3 する（最小0に制限しておくのが一般的）
+                        scores[currentPlayer] = Math.max(0, scores[currentPlayer] - 3);
+                        await db.collection("games").doc(gameId).update({
+                            scores: scores
+                        });
+                        console.log("悪魔の効果：スコア -3");
+                    } else {
+                        // 一回休み → skippedPlayers に追加
+                        await db.collection("games").doc(gameId).update({
+                            skippedPlayers: firebase.firestore.FieldValue.arrayUnion(currentPlayer)
+                        });
+                        console.log("悪魔の効果：一回休み");
+                    }
+                    break;
+                }
+
+
+                case "revo":
+                    // revoカードの場合の処理
+                    // すべてのプレイヤーのスコアを均等にする
+                    const totalPlayers = Object.keys(scores).length; // プレイヤー数を取得
+                    const totalScore = Object.values(scores).reduce((a, b) => a + b, 0); // 現在のスコアの合計を計算
+                    const equalScore = Math.floor(totalScore / totalPlayers); // 余りを切り捨てて均等なスコアを計算
+
+                    // 各プレイヤーのスコアを均等に設定
+                    for (let player in scores) {
+                        scores[player] = equalScore;
+                    }
+
+                    break;
+                case "skip":
+                    scores[currentPlayer]++;
+                    currentPlayer = currentPlayer % numPlayers + 1;
+                    await db.collection("games").doc(gameId).update({ currentPlayer });
+                    break;
+
+                case "thief":
+                    // 泥棒モード開始
+                    console.log(568)
+                    isProcessing = false;
+                    isThiefMode = true;
+
+
+                    // カードが選ばれるのを待つ
+                    await new Promise(resolve => {
+                        resolveThiefSelect = resolve;
+                    });
+
+                    // ↓カード選択後の処理
+                    isThiefMode = false;
+                    await thiefEffect(index);
+                    scores[currentPlayer] += 2;
+                    break;
+                case "king":
+                    // 現在のプレイヤーのスコアを取得
+                    let currentPlayerScore = scores[currentPlayer];
+
+                    // 他のプレイヤーのスコアを加算し、現在のプレイヤー以外のスコアをゼロにする
+                    for (let playerNum = 1; playerNum <= numPlayers; playerNum++) {
+                        if (playerNum !== currentPlayer) {
+                            currentPlayerScore += scores[playerNum]; // 他のプレイヤーのスコアを加算
+                            scores[playerNum] = 0; // 他のプレイヤーのスコアをゼロにする
+                        }
+                    }
+
+                    // 現在のプレイヤーのスコアを更新
+                    scores[currentPlayer] = currentPlayerScore;
+                    break;
+
+                case "special":
+                    isProcessing = false;
+                    isKaraageMode = true;
+                    scores[currentPlayer] += 2;
+                    await db.collection("games").doc(gameId).update({ scores });
+                    // カードが選ばれるのを待つ
+                    await new Promise(resolve => {
+                        resolveThiefSelect = resolve;
+                    });
+                    isKaraageMode = false;
+                    // ↓カード選択後の処理
+                    await specialEffect(index);
+
+                    break;
+            }
+        }
+        function showCardEffect(cardType) {
+            const effectImage = document.getElementById("effectImage");
+            const effectText = document.getElementById("effectText");
+            const modal = document.getElementById("effectModal");
+
+            // 画像と説明を設定
+            effectImage.src = `${cardType}.png`; // カード画像パス（適宜修正）
+            effectText.innerText = getCardEffectText(cardType); // 効果説明（↓関数作る）
+
+            modal.classList.remove("hidden");
+            modal.addEventListener("click", () => {
+                modal.classList.add("hidden");
+            });
+
+        }
+
+        // 効果説明をカードの種類に応じて返す
+        function getCardEffectText(cardType) {
+            switch (cardType) {
+                case "bomb":
+                    return "こんなところに爆弾が…得点が。おつかれ";
+                case "heart":
+                    return "何の変哲もないカード。ただの一点。無味無臭";
+                case "special":
+                    return "無味のカードが、からあげ味に！？食べつくせ";
+                case "crowbar":
+                    return "何の変哲もないカード。ただの一点。無味無臭";
+                case "1":
+                    return "コツコツ1点！";
+                case "2":
+                    return "2点も！？有難く頂戴";
+                case "3":
+                    return "これはレアだ。この運命に乾杯！";
+                case "angel":
+                    return "天使が僕の下に…？ありがたや";
+                case "devil":
+                    return "とぅ。悪魔参上だ！やっぱ悪さ最高だぜぇぇ";
+                case "skip":
+                    return "次の人何もできないね。どんまい。";
+                case "revo":
+                    return "革命の火をあげろぉぉぉ。弱者に救いを";
+                case "king":
+                    return "吾が王だ。皆の者すべてよこせ";
+                case "thief":
+                    return "どんなカードでも奪ってきまっせ。任せてくだせぇ";
+                case "karaage":
+                    return "うめぇよぉ。まだまだ食わしてくれぇ";
+            }
+        }
+
+
+        async function updateSP() {
+            const gameDoc = await db.collection("games").doc(gameId).get();
+            //現在プレイヤー変更
+            const gameData = gameDoc.data();
+            const currentPlayerNum = gameData.currentPlayer;
+            const PName = gameData.PName;
+            const myplayerName = PName[currentPlayerNum];
+            const playerDiv = document.getElementById("currentPlayer");
+            playerDiv.innerHTML = `<h3>現在プレイヤー: ${myplayerName}</h3>`;
+
+            //スコア更新
+            const scoreBoard = document.getElementById("scores");
+            scoreBoard.innerHTML = "";
+            for (let i = 1; i <= numPlayers; i++) {
+                scoreBoard.innerHTML += `<h3>プレイヤー${PName[i]} スコア: ${scores[i]}</h3>`;
+            }
+        }
+        async function checkGameOver() {
+            const gameDoc = await db.collection("games").doc(gameId).get();
+            const data = gameDoc.data();
+
+            const totalCards = cards.length;
+            const matched = data.matchedIndices || [];
+
+            if (matched.length === totalCards) {
+                await showGameOver();
+            }
+        }
+
+
+        async function showGameOver() {
+            const finalScoreEl = document.getElementById("finalScore");
+
+            const gameDoc = await db.collection("games").doc(gameId).get();
+            const data = gameDoc.data();
+
+            // PName と scores を取得
+            const PName = data.PName;
+            const scores = data.scores;
+            // scores と PName を使って [{name, score}] の配列を作る
+            const rankingArray = Object.entries(scores).map(([playerNum, score]) => {
+                const name = PName[playerNum] ?? `プレイヤー${playerNum}`;
+                return { name, score };
+            });
+
+            // スコア降順でソート
+            rankingArray.sort((a, b) => b.score - a.score);
+
+            // 表示用の文字列を生成
+            const rankingList = rankingArray
+                .map((entry, index) => {
+                    const style = index === 0 ? 'style="color: red;"' : '';
+                    return `<li ${style}>${index + 1}位: ${entry.name}（${entry.score} ペア）</li>`;
+                })
+                .join(""); // <li>要素の文字列を結合
+
+            // 最終的なリストを finalScore の要素に挿入
+            finalScoreEl.innerHTML = `<ul>${rankingList}</ul>`;
+
+            // 文字を大きくするスタイル
+            finalScoreEl.style.fontSize = "24px"; // サイズ調整
+            finalScoreEl.style.lineHeight = "1.5"; // 行間の調整
+            finalScoreEl.style.listStyleType = "none"; // 黒点を除去
+            finalScoreEl.style.paddingLeft = "20px"; // 左にパディングを追加してインデント
+            finalScoreEl.style.color = "#333"; // 文字の色を変更
+
+            // ul 要素を左揃え
+            const ul = finalScoreEl.querySelector('ul');
+            ul.style.textAlign = 'left'; // 左揃え
+            document.getElementById("gameOverModal").style.display = "flex";
+        }
+
+
+
+
+        async function restartGame() {
+            document.getElementById("gameOverModal").style.display = "none";
+            document.getElementById("gameBoard").style.display = "none";
+            document.querySelector(".score-board").style.display = "none";
+            document.querySelector(".current-Player").style.display = "none";
+            document.getElementById("gameIdDisplay").style.display = "block"
+            document.getElementById("lobbySection").style.display = "block";
+
+            await db.collection("games").doc(gameId).update({
+                started: false,
+                flipped: [],
+                matchedIndices: [],
+            });
+
+        }
+
+
+
+        async function exitGame() {
+            // プレイヤー情報をすべて削除
+            const playersRef = db.collection("games").doc(gameId).collection("players");
+            const playersSnapshot = await playersRef.get();
+            const deletePromises = playersSnapshot.docs.map(doc => doc.ref.delete());
+            await Promise.all(deletePromises);
+
+            // ゲームドキュメントを削除
+            await db.collection("games").doc(gameId).delete();
+            location.reload();
+        }
+
+    </script>
+</body>
+
+</html>
