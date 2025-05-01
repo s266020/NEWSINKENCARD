@@ -24,6 +24,60 @@
             cursor: pointer;
         }
 
+        #playerList li {
+            font-size: 20px;
+            /* プレイヤーネームの文字サイズを大きくする */
+            font-weight: bold;
+            /* 太字にする */
+            margin-bottom: 10px;
+        }
+
+        #buttonContainer {
+            display: flex;
+            gap: 10px;
+            /* ボタン間のスペース */
+            justify-content: center;
+            /* ボタンを中央揃え */
+            margin-top: 30px;
+            /* 上部に余白を追加 */
+        }
+
+        #startGameBtn,
+        #cardsBtn,
+        #retireGameBtn {
+            font-size: 18px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #startGameBtn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #cardsBtn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        #retireGameBtn {
+            background-color: #f44336;
+            color: white;
+        }
+
+
+
+        #startGameBtn:disabled,
+        #cardsBtn:disabled,
+        #retireGameBtn:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+
+
+
         .flipped {
             background-color: white;
         }
@@ -104,6 +158,158 @@
         .current-Player {
             display: none;
         }
+
+        .highlight-red {
+            border: 3px solid red;
+            box-shadow: 0 0 10px red;
+            transition: all 0.3s;
+        }
+
+
+
+
+
+
+
+
+
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            justify-items: center;
+            margin-top: 20px;
+        }
+
+        .card-wrapper {
+            width: 100%;
+            max-width: 150px;
+            text-align: center;
+        }
+
+        .card-wrapper img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .card-wrapper label,
+        .card-wrapper input {
+            display: block;
+            margin-top: 8px;
+        }
+
+        /* ボタンスタイル */
+        #cardSelectionForm button {
+            margin-top: 30px;
+            padding: 12px 24px;
+            font-size: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        #cardSelectionForm button:hover {
+            background-color: #45a049;
+        }
+
+        /* スマホ画面用の調整 */
+        @media (max-width: 600px) {
+            .card-container {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            #cardSelectionForm button {
+                font-size: 18px;
+                padding: 10px 20px;
+                width: 90%;
+            }
+        }
+
+
+        /* もう一度プレイボタン */
+        #restartButton {
+            background: linear-gradient(45deg, #6e7e80, #4c5c63);
+            /* グラデーション */
+            color: white;
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            /* 丸い角 */
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s ease;
+            /* アニメーション */
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            /* シャドウ */
+        }
+
+        /* 終了ボタン */
+        #exitButton {
+            background: linear-gradient(45deg, #f44336, #ff9800);
+            /* 赤オレンジのグラデーション */
+            color: white;
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            /* 丸い角 */
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s ease;
+            /* アニメーション */
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            /* シャドウ */
+        }
+
+        /* ホバー時に色を変更 */
+        #restartButton:hover {
+            background: linear-gradient(45deg, #5a6b74, #3f4f57);
+            /* 少し濃い色 */
+            transform: translateY(-4px);
+            /* 上に浮かせる */
+        }
+
+        #exitButton:hover {
+            background: linear-gradient(45deg, #e53935, #f57c00);
+            /* 終了ボタンの色変更 */
+            transform: translateY(-4px);
+            /* 上に浮かせる */
+        }
+
+        /* クリック時に少し縮む */
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* confirmCardBtn のみに適用 */
+        #startGameBtn:disabled {
+            cursor: not-allowed;
+            /* 禁止カーソル */
+            background-color: #ccc;
+            /* ボタンの背景色を変更 */
+            color: #666;
+            /* ボタンの文字色を変更 */
+            border: 1px solid #999;
+            /* 枠線を変更 */
+        }
+
+        /* ボタンが無効になったとき、マウスオーバー時にカーソルを禁止に変更 */
+        /* confirmCardBtn のみに適用 */
+        #confirmCardBtn:disabled {
+            cursor: not-allowed;
+            /* 禁止カーソル */
+            background-color: #ccc;
+            /* ボタンの背景色を変更 */
+            color: #666;
+            /* ボタンの文字色を変更 */
+            border: 1px solid #999;
+            /* 枠線を変更 */
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -130,8 +336,11 @@
         <h2>待機中のプレイヤー</h2>
         <ul id="playerList"></ul>
         <button id="startGameBtn" onclick="startGameInLobby()" disabled>ゲーム開始</button>
+        <button id="cardsBtn" onclick="requestCardSelection()">カード選択</button>
+        <button id="retireGameBtn" onclick="leaveGame()">抜ける</button>
     </div>
     <div id="gameIdDisplay" style="margin-top: 10px; font-size: 18px; font-weight: bold;"></div>
+
 
 
     <!-- ゲーム画面 -->
@@ -146,14 +355,24 @@
         <div class="modal-content">
             <h2>ゲーム終了！</h2>
             <p id="finalScore"></p>
-            <button onclick="restartGame()">もう一度プレイ</button>
-            <button onclick="exitGame()">終了</button>
+            <button id="restartButton" onclick="restartGame()">もう一度プレイ</button>
+            <button id="exitButton" onclick="leaveGame()">終了</button>
+
         </div>
     </div>
     <div id="effectModal" class="effect-modal hidden">
         <img id="effectImage" src="" alt="Card Image" />
         <div id="effectText"></div>
     </div>
+    <div id="cardSelectionSection" style="display: none;">
+        <h3>カードを選択してください</h3>
+        <form id="cardSelectionForm" onsubmit="return false;">
+            <div id="cardSelectionContainer" class="card-container"></div>
+            <button id="confirmCardBtn" onclick="backlobby()" disabled>カードを決定</button>
+        </form>
+    </div>
+
+
 
 
     <script>
@@ -168,7 +387,6 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
         let gameId = "";
         let playerName = "";
         let myplayerName = "";
@@ -177,16 +395,10 @@
         let numPlayers = 0;
         let playerId = "";
         let skipdata = 0;
-        let cards = [
-            "1", "1", "1", "1", "1", "1", "2", "2", "2", "2", "3", "3",
-            "heart", "heart", "heart", "heart", "heart", "heart", "heart", "heart",
-            "crowbar", "crowbar", "crowbar", "crowbar", "crowbar", "crowbar", "crowbar", "crowbar",
-            "bomb", "bomb", "special", "special", "skip", "skip", "skip", "skip",
-            "devil", "devil", "devil", "devil", "angel", "angel", "angel", "angel",
-            "thief", "thief", "king", "king", "revo", "revo"
-        ];
-
-        const cardImages = {
+        let generatedCards = [];
+        let cards = [];
+        let selectedCards = [];
+        let cardImages = {
             "bomb": "bomb.png",
             "special": "special.png",
             "skip": "skip.png",
@@ -197,27 +409,52 @@
             "revo": "revo.png",
             "heart": "heart.png",
             "crowbar": "crowbar.png",
+            "diamond": "diamond.png",
+            "spade": "spade.png",
             "karaage": "karaage.png",
+            "elf": "elf.png",
             "1": "1.png",
             "2": "2.png",
             "3": "3.png",
-
         };
         let isThiefMode = false;        // 泥棒効果中かどうか
         let resolveThiefSelect = null;
         let selectedThiefIndex = null;
-
-        const specialTypes = ["heart", "crowbar"];
+        const specialTypes = ["heart", "crowbar", "diamond", "spade"];
         const originalCardImages = {
             heart: "heart.png",
             crowbar: "crowbar.png",
+            diamond: "diamond.png",
+            spade: "spade.png",
         };
+        let lastEffectTimestamp = 0;
         let selectedspecialIndex = null;
         let originalSpecialCards = []; // 元の状態保存用
         let isKaraageMode = false;
-
+        let karaageEffect = false;
+        let finishkaraageEffect = false;
         let scores = {};
         let flippedCards = [];
+        let lastSeenEffectKey = "";
+
+        async function checkIfHost() {
+            const playerDoc = await db.collection("games")
+                .doc(gameId)
+                .collection("players")
+                .doc(playerId)
+                .get();
+
+            const data = playerDoc.data();
+            if (data && data.isHost) {
+                document.getElementById("startGameBtn").disabled = false;
+                document.getElementById("confirmCardBtn").disabled = false;
+            } else {
+                document.getElementById("startGameBtn").disabled = true;
+                document.getElementById("confirmCardBtn").disabled = true;
+            }
+        }
+
+
 
         function joinGame() {
             gameId = document.getElementById("gameIdInput").value.trim();
@@ -231,15 +468,42 @@
             if (!playerName) return alert("名前を入力してください");
 
             playerId = `player_${Date.now()}`;
-            await db.collection("games").doc(gameId).set({ started: false }, { merge: true });
-            await db.collection("games").doc(gameId).collection("players").doc(playerId).set({
-                name: playerName,
-            });
+            const gameRef = db.collection("games").doc(gameId);
+            const playersRef = gameRef.collection("players");
 
+            // ゲームドキュメントを作成・更新（started フラグ）
+            await gameRef.set({ started: false }, { merge: true });
+
+            // 現在のプレイヤー数を取得
+            const snapshot = await playersRef.get();
+            const isHost = snapshot.empty; // 最初のプレイヤーならホスト
+
+            // プレイヤー情報を保存
+            await playersRef.doc(playerId).set({
+                name: playerName,
+                isHost: isHost
+            });
+            await checkIfHost();
+            if (isHost) {
+                await updateHostStatus();
+            }
+
+            listenToCardSelectionStatus();
+            listenToLobby(); // ロビー監視（名前一覧など）
             document.getElementById("nameInputSection").style.display = "none";
             document.getElementById("lobbySection").style.display = "block";
+        }
 
-            listenToLobby();
+        async function updateHostStatus() {
+            const gameRef = db.collection("games").doc(gameId);
+            const playersRef = gameRef.collection("players");
+
+            // ゲーム内でまだホストがいない場合、最初のプレイヤーにホスト権限を付与
+            const snapshot = await playersRef.get();
+            if (snapshot.empty) return;
+
+            const nextHost = snapshot.docs[0];
+            await nextHost.ref.update({ isHost: true });
         }
 
         function listenToLobby() {
@@ -253,9 +517,8 @@
                     li.textContent = doc.data().name;
                     playerListEl.appendChild(li);
                 });
-                if (numPlayers >= 1) {
-                    document.getElementById("startGameBtn").disabled = false;
-                }
+                // ボタンの有効無効を正しく切り替える
+                checkIfHost();
             });
 
             db.collection("games").doc(gameId).onSnapshot(doc => {
@@ -264,30 +527,154 @@
                 }
             });
         }
+        async function requestCardSelection() {
+            event.preventDefault();
+            await db.collection("games").doc(gameId).update({
+                selectedCards: [],
+                selectingCards: true,
+            }, { merge: true });
+        }
+
+        // ロビー画面にカード選択セクションを表示
+        function showCardSelection() {
+            selectedCards = [];
+            // 表示用のカードリスト
+            const cards = [
+                "1", "2", "3",
+                "heart", "crowbar", "diamond", "spade",
+                "bomb", "special",
+                "skip", "devil",
+                "angel", "thief",
+                "king", "revo", "elf"
+            ];
+
+            const cardSelectionContainer = document.getElementById("cardSelectionContainer");
+            cardSelectionContainer.innerHTML = "";
+
+            // 各カードに対応する画像と入力フィールドを作成
+            cards.forEach(card => {
+                // カードを表示するためのラッパーを作成
+                const cardWrapper = document.createElement("div");
+                cardWrapper.classList.add("card-wrapper");
+
+                // 画像を作成（画像ファイルは適宜置き換えてください）
+                const img = document.createElement("img");
+                img.src = `${card}.png`;  // 例: images/1.png, images/heart.png
+                img.alt = card;
+
+                // ペア数を選択する入力フィールドを作成
+                const label = document.createElement("label");
+                label.textContent = `${card} ペア数: `;
+
+                const input = document.createElement("input");
+                input.type = "number";  // 数値の入力
+                input.name = card;      // 名前をカード名に設定
+                input.value = "0";      // デフォルトのペア数は 0
+                input.min = "0";        // 0 以下の数値は選べないように
+                input.max = "10";       // 任意の最大数値（例えば10ペアまで）
+                input.step = "1";       // 1単位で変更できるように設定
+
+                // カード画像とペア数選択をラップする
+                cardWrapper.appendChild(img);
+                cardWrapper.appendChild(label);
+                cardWrapper.appendChild(input);
+
+                // コンテナにカードを追加
+                cardSelectionContainer.appendChild(cardWrapper);
+            });
+            document.getElementById("cardSelectionSection").style.display = "block";
+            document.getElementById("lobbySection").style.display = "none";
+        }
+        function listenToCardSelectionStatus() {
+            db.collection("games").doc(gameId).onSnapshot(doc => {
+                const data = doc.data();
+                if (data?.selectingCards) {
+                    // selectingCardsがtrueならカード選択画面へ
+                    showCardSelection();
+                } else {
+                    // selectingCardsがfalseならロビー画面へ
+                    document.getElementById("cardSelectionSection").style.display = "none";
+                    document.getElementById("lobbySection").style.display = "block";
+                }
+            });
+        }
+        async function backlobby() {
+            event.preventDefault();
+            handleCardSelection(event)
+            saveSelectedCardsToFirebase(selectedCards);
+            await db.collection("games").doc(gameId).update({
+                selectingCards: false
+            });
+            document.getElementById("cardSelectionSection").style.display = "none";
+            document.getElementById("lobbySection").style.display = "block";
+
+        }
+
+        // カード選択フォームが送信された際に呼ばれる
+        async function handleCardSelection(event) {
+            event.preventDefault();
+            const cardInputs = document.querySelectorAll("input[type='number']");
+
+            cardInputs.forEach(input => {
+                const cardName = input.name;
+                const pairCount = parseInt(input.value);
+                if (pairCount > 0) {
+                    for (let i = 0; i < pairCount; i++) {
+                        selectedCards.push(cardName);
+                        selectedCards.push(cardName);  // ペア数分だけカードを追加
+                    }
+                }
+            });
+        }
+
+        // Firebaseに選ばれたカードを保存する関数
+        async function saveSelectedCardsToFirebase(selectedCards) {
+            await db.collection("games").doc(gameId).set({
+                selectedCards: selectedCards
+            }, { merge: true });
+        }
+
+
+
+
 
         async function startGameInLobby() {
-            shuffle(cards);
-            const playerSnapshot = await db.collection("games").doc(gameId).collection("players").get();
-            let scoresObj = {};
-            let Name = {};
-            let index = 1;
-            playerSnapshot.forEach(doc => {
-                const name = doc.data().name;
-                scoresObj[index] = 0;
-                Name[index] = name;
-                index++;
-            });
+            // selectedCardsをFirebaseから取得
+            const gameDoc = await db.collection("games").doc(gameId).get();
+            const data = gameDoc.data();
+            if (data && data.selectedCards) {
+                // ここでcardsにselectedCardsをコピー！
+                cards = [...data.selectedCards];
+                shuffle(cards);
+                const playerSnapshot = await db.collection("games").doc(gameId).collection("players").get();
+                const playersArray = playerSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    name: doc.data().name
+                }));
 
-            await db.collection("games").doc(gameId).set({
-                cards,
-                currentPlayer: 1,
-                PName: Name,
-                scores: scoresObj,
-                flipped: [],
-                matchedIndices: [],
-                skippedPlayers: [],
-                started: true
-            }, { merge: true });
+                // プレイヤーの順番をランダムにする
+                shuffle(playersArray);
+                let scoresObj = {};
+                let Name = {};
+                playersArray.forEach((player, index) => {
+                    const playerIndex = index + 1;
+                    scoresObj[playerIndex] = 0;
+                    Name[playerIndex] = player.name;
+                });
+
+                await db.collection("games").doc(gameId).set({
+                    cards: cards,
+                    currentPlayer: 1,
+                    PName: Name,
+                    scores: scoresObj,
+                    flipped: [],
+                    matchedIndices: [],
+                    skippedPlayers: [],
+                    started: true
+                }, { merge: true });
+
+
+            }
         }
 
         function shuffle(array) {
@@ -296,6 +683,29 @@
                 [array[i], array[j]] = [array[j], array[i]];
             }
         }
+        function shuffleRemainingCardsOnly(cards, matchedIndices, flipped, includeFlipped = false) {
+            const totalIndices = [...Array(cards.length).keys()];
+
+            // includeFlipped に応じてシャッフル対象を決定
+            const fixedIndices = includeFlipped
+                ? new Set([...matchedIndices])
+                : new Set([...matchedIndices, ...flipped]);
+
+            const toShuffleIndices = totalIndices.filter(i => !fixedIndices.has(i));
+
+            const toShuffleCards = toShuffleIndices.map(i => cards[i]);
+
+            // Fisher-Yates シャッフル
+            for (let i = toShuffleCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [toShuffleCards[i], toShuffleCards[j]] = [toShuffleCards[j], toShuffleCards[i]];
+            }
+
+            toShuffleIndices.forEach((idx, i) => {
+                cards[idx] = toShuffleCards[i];
+            });
+        }
+
 
         function startGame() {
             document.getElementById("lobbySection").style.display = "none";
@@ -303,7 +713,9 @@
             document.getElementById("gameBoard").style.display = "grid";
             document.querySelector(".score-board").style.display = "block";
             document.querySelector(".current-Player").style.display = "block";
-
+            EFFECT();
+            SpecialEffects();
+            checkGameOver();
             listenToGameState();
         }
 
@@ -318,14 +730,16 @@
                 scores = data.scores;
                 currentPlayer = data.currentPlayer;
                 flippedCards = data.flipped;
-
-
-                renderBoard(flippedCards);
+                renderBoard(cards, flippedCards);
+                if (data.cardImages) {
+                    cardImages = data.cardImages;
+                    updateCardImagesOnScreen();
+                }
                 updateSP();
             });
         }
 
-        function renderBoard(flipped) {
+        function renderBoard(cards, flipped) {
             const gameBoard = document.getElementById("gameBoard");
             const scoreBoard = document.getElementById("scores"); // ← 追加
             gameBoard.innerHTML = "";
@@ -341,17 +755,18 @@
                 const currentPlayerNum = data.currentPlayer;
                 const PName = data.PName;
                 const myplayerName = PName[currentPlayerNum];
+                const highlighted = data.highlightedIndices || [];
 
                 // --- カード描画部分 ---
-
-
-
-
                 cards.forEach((value, index) => {
                     const card = document.createElement("div");
                     card.className = "card";
                     card.dataset.index = index;
                     card.dataset.value = value;
+
+                    if (highlighted.includes(index)) {
+                        card.classList.add("highlight-red");
+                    }
 
                     if (flipped.includes(index) || matched.includes(index)) {
                         card.classList.add("flipped");
@@ -367,17 +782,26 @@
 
                     } else {
                     }
-
                     if (playerName === myplayerName &&
                         !matched.includes(index) &&
                         !flipped.includes(index)) {
                         card.addEventListener("click", () => handleCardClick(card));
                     }
-
                     gameBoard.appendChild(card);
                 });
             });
         }
+        function updateCardImagesOnScreen() {
+            document.querySelectorAll(".card.flipped img").forEach(img => {
+                const cardDiv = img.parentElement;
+                const value = cardDiv.dataset.value;
+                const newSrc = cardImages[value];
+                if (newSrc) {
+                    img.src = `./${newSrc}`;
+                }
+            });
+        }
+
 
 
         let isProcessing = false;
@@ -391,67 +815,86 @@
             const matched = data.matchedIndices || [];
 
             // 泥棒効果中なら特別な処理
-            if (isThiefMode) {
-                console.log(348)
+            if (isThiefMode || isKaraageMode) {
                 const index = parseInt(card.dataset.index);
-
                 // 表 or matchedカードは無視
                 if (data.flipped.includes(index) || matched.includes(index)) return;
 
-                selectedThiefIndex = index; // 👈 プレイヤーが選んだ index を保存
+                // プレイヤーが選んだカードを保存
+                if (isThiefMode) selectedThiefIndex = index;
+                if (isKaraageMode) selectedspecialIndex = index;
+
                 const newFlipped = [...data.flipped, index];
                 await db.collection("games").doc(gameId).update({ flipped: newFlipped });
-
-                if (resolveThiefSelect) resolveThiefSelect(); // 👈 Promise を解決
-                return;
-            }
-            if (isKaraageMode) {
-                console.log(348)
-                const index = parseInt(card.dataset.index);
-                // 表 or match
-                // カードは無視
-                if (data.flipped.includes(index) || matched.includes(index)) return;
-
-                selectedspecialIndex = index; // 👈 プレイヤーが選んだ index を保存
-                const newFlipped = [...data.flipped, index];
-                await db.collection("games").doc(gameId).update({ flipped: newFlipped });
-
-                if (resolveThiefSelect) resolveThiefSelect(); // 👈 Promise を解決
+                if (resolveThiefSelect) resolveThiefSelect(); // 👈 Promise 解決
                 return;
             }
 
             data.flipped.push(index);
             await bombeffect(index, data, gameId, cards);
-
-            await db.collection("games").doc(gameId).update({ flipped: data.flipped });
-
+            await db.collection("games").doc(gameId).update({
+                flipped: data.flipped,
+                highlightedIndices: data.flipped
+            }, { merge: true });
             if (data.flipped.length === 2) {
                 const card1 = cards[data.flipped[0]];
                 const card2 = cards[data.flipped[1]];
-                console.log("flipped indexes:", data.flipped);
-                console.log("card1:", card1, "card2:", card2);
-
                 if (card1 === card2) {
-                    showCardEffect(card1);
                     await triggerCardEffect(card1, data);
                     const docment = await db.collection("games").doc(gameId).get();  // ゲームドキュメントを取得
                     const updata = docment.data(); // 通常の一致したカード名を渡す
                     const newMatched = [...(updata.matchedIndices || []), ...updata.flipped];
-                    const nextPlayer = await getNextPlayer(currentPlayer, numPlayers, data, gameId);
                     await db.collection("games").doc(gameId).update({
-                        currentPlayer: nextPlayer,
+                        currentPlayer: currentPlayer,
                         scores: scores,
                         flipped: [],
-                        matchedIndices: newMatched
+                        highlightedIndices: [],
+                        noMatchPlayers: [],
+                        matchedIndices: newMatched,
                     });
                     await checkGameOver();
                     isProcessing = false;
                 } else {
                     setTimeout(async () => {
-                        const nextPlayer = await getNextPlayer(currentPlayer, numPlayers, data, gameId);
-                        await db.collection("games").doc(gameId).update({
+                        const gameRef = db.collection("games").doc(gameId);
+                        const latestDoc = await gameRef.get();
+                        const latestData = latestDoc.data();
+                        const matched = latestData.matchedIndices || [];
+                        const currentCards = [...latestData.cards]; // ← Firestoreのcardsを取得
+                        const remaining = currentCards.length - matched.length;
+
+                        let nextPlayer;
+                        const extraTurnAfterMiss = latestData.extraTurnAfterMiss;
+                        if (extraTurnAfterMiss === currentPlayer) {
+                            nextPlayer = currentPlayer;
+                            skipEffect();
+                            await gameRef.update({ extraTurnAfterMiss: null }); // フラグをリセット
+                        } else {
+                            nextPlayer = await getNextPlayer(currentPlayer, numPlayers, latestData, gameId);
+                        }
+
+                        if (remaining <= 6) {
+                            const updatedNoMatch = Array.from(new Set([...(latestData.noMatchPlayers || []), currentPlayer]));
+
+                            if (updatedNoMatch.length >= numPlayers) {
+                                shuffleRemainingCardsOnly(currentCards, matched, latestData.flipped, true);
+                                elfEffect();
+                                await gameRef.update({
+                                    cards: currentCards, // ← シャッフル済み配列を保存
+                                    noMatchPlayers: []
+                                });
+                            } else {
+                                await gameRef.update({
+                                    noMatchPlayers: updatedNoMatch
+                                });
+                            }
+                        }
+
+
+                        await gameRef.update({
                             currentPlayer: nextPlayer,
-                            flipped: []
+                            flipped: [],
+                            highlightedIndices: []
                         });
 
                         isProcessing = false;
@@ -461,9 +904,6 @@
                 isProcessing = false;
             }
         }
-
-
-
         async function bombeffect(index, data, gameId, cards) {
             scores[currentPlayer] = 0;
             if (cards[index] === "bomb") {
@@ -485,8 +925,6 @@
                         flipped: data.flipped,
                         scores: scores,
                     });
-
-                    console.log("新しい flipped 配列:", data.flipped);
                 } else {
                     // 必要なら他のロジックを書く
                 }
@@ -496,20 +934,19 @@
             let next = currentPlayer;
             do {
                 next = next % numPlayers + 1;
-                console.log("ターン", next);
                 const gameDoc = await db.collection("games").doc(gameId).get();
                 const updatedData = gameDoc.data();
                 const skippedPlayers = updatedData.skippedPlayers || [];
 
                 if (skippedPlayers.includes(next)) {
-                    if (Math.random() < 0.8) {
+                    if (Math.random() < 0.6) {
                         // FirebaseのDBからも削除
                         await db.collection("games").doc(gameId).update({
                             skippedPlayers: firebase.firestore.FieldValue.arrayRemove(next)
                         });
                     }
                     else {
-
+                        devilEffect();
                     }
 
                     // 次のプレイヤーを探すため continue
@@ -552,17 +989,17 @@
                 await db.collection("games").doc(gameId).update({
                     flipped: flipped,
                 });
-                console.log("Flipped by thiefEffect:", flipped);
             } catch (error) {
                 console.error("Firestore 更新エラー:", error);
             }
         }
         async function specialEffect() {
             const doc = await db.collection("games").doc(gameId).get();
-            const data = doc.data();
-            const matched = [...(data.matchedIndices || []), ...data.flipped];
+            let data = doc.data();
+            const matched = [...(data.matchedIndices || []), ...data.flipped,];
             const flipped = [...data.flipped];
             const val1 = cards[selectedspecialIndex];
+            const totalCards = data.cards.length;
             const specialHiddenCards = cards
                 .map((val, idx) => ({ val, idx })) // val: カードの種類, idx: 位置
                 .filter(obj =>
@@ -576,12 +1013,13 @@
                     !data.flipped.includes(idx) &&
                     !(data.matchedIndices || []).includes(idx)
                 );
-
                 if (hasUnflippedUnmatchedCard) {
                     cardImages[type] = "karaage.png";
                 }
             });
-
+            await db.collection("games").doc(gameId).update({
+                cardImages: cardImages
+            }, { merge: true });
             if (!flipped.includes(selectedspecialIndex)) {
                 flipped.push(selectedspecialIndex);
             }
@@ -596,42 +1034,77 @@
                     )
                     .slice(0, 1);
                 flipped.push(...supportIndices.map(obj => obj.idx));
+                const pairIndex = supportIndices[0].idx;
+                const newmatched = [...(data.matchedIndices || []), ...data.flipped, pairIndex];
                 scores[currentPlayer]++;
                 await db.collection("games").doc(gameId).update({
-                    flipped: flipped,
-                    matchedIndices: matched,
-                    scores: scores
+                    matchedIndices: newmatched,
+                    flipped: [],
+                    scores: scores,
                 });
+
+                if (newmatched.length === totalCards) {
+                    isProcessing = false;
+                    isKaraageMode = false;
+                    const updates = {};
+                    specialTypes.forEach(type => {
+                        if (cardImages[type] === "karaage.png") {
+                            updates[`cardImages.${type}`] = `${type}.png`;  // ネストフィールド指定
+                        }
+                    });
+
+                    await db.collection("games").doc(gameId).update(updates);
+                    finishkaraage2Effect();
+                    await checkGameOver()
+                    return; // ★★★ 関数を終了 ★★★
+                }
+
                 isProcessing = false;
                 isKaraageMode = true;
                 await new Promise(resolve => {
                     resolveThiefSelect = resolve;
                 });
+                karaageeEffect();
                 await specialEffect();
+
             } else {
                 flipped.pop();
+                const updates = {};
                 specialTypes.forEach(type => {
-                    // もしそのカードが karaage.png になっている場合、元のカードに戻す
                     if (cardImages[type] === "karaage.png") {
-                        // 元の画像に戻す（例えば "original.png" と仮定）
-                        cardImages[type] = `${type}.png`; // typeに基づいた元の画像ファイル名
+                        updates[`cardImages.${type}`] = `${type}.png`;  // ネストフィールド指定
                     }
                 });
+                await db.collection("games").doc(gameId).update(updates);
                 // 1秒待つ（1000ミリ秒）
+                finishkaraage2Effect();
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 const nextPlayer = await getNextPlayer(currentPlayer, numPlayers, data, gameId);
                 await db.collection("games").doc(gameId).update({
                     flipped: flipped,
-                    cardImages: cardImages
-                });
+                }, { merge: true });
+
                 isProcessing = false;
                 isKaraageMode = false;
-            }
 
+            }
         }
 
-        async function triggerCardEffect(card1, data, index) {
 
+
+
+        async function triggerCardEffect(card1, data, index) {
+            const totalCards = data.cards.length;
+            const matched = data.matchedIndices || [];
+            const unflippedCards = data.cards.filter((card, index) =>
+                !matched.includes(index) && !data.flipped.includes(index)
+            );
+            await db.collection("games").doc(gameId).update({
+                latestEffect: {
+                    cardType: card1,
+                    timestamp: Date.now()
+                }
+            });
             switch (card1) {
                 case "heart":
                     scores[currentPlayer]++;
@@ -639,6 +1112,13 @@
                 case "crowbar":
                     scores[currentPlayer]++;
                     break;
+                case "diamond":
+                    scores[currentPlayer]++;
+                    break;
+                case "spade":
+                    scores[currentPlayer]++;
+                    break;
+
                 case "1":
                     scores[currentPlayer]++;
                     break;
@@ -649,9 +1129,7 @@
                     scores[currentPlayer] += 3;
                     break;
                 case "angel":
-                    console.log("得点", scores[currentPlayer])
                     scores[currentPlayer] += 4;
-                    console.log("得点", scores[currentPlayer])
                     break;
                 case "devil": {
                     const random = Math.random(); // 0〜1のランダムな数（0.5未満なら前者、0.5以上なら後者）
@@ -662,13 +1140,11 @@
                         await db.collection("games").doc(gameId).update({
                             scores: scores
                         });
-                        console.log("悪魔の効果：スコア -3");
                     } else {
                         // 一回休み → skippedPlayers に追加
                         await db.collection("games").doc(gameId).update({
                             skippedPlayers: firebase.firestore.FieldValue.arrayUnion(currentPlayer)
                         });
-                        console.log("悪魔の効果：一回休み");
                     }
                     break;
                 }
@@ -689,27 +1165,33 @@
                     break;
                 case "skip":
                     scores[currentPlayer]++;
-                    currentPlayer = currentPlayer % numPlayers + 1;
-                    await db.collection("games").doc(gameId).update({ currentPlayer });
+                    await db.collection("games").doc(gameId).update({
+                        extraTurnAfterMiss: currentPlayer
+                    });
                     break;
 
                 case "thief":
                     // 泥棒モード開始
-                    console.log(568)
-                    isProcessing = false;
-                    isThiefMode = true;
+                    // 残りカードが2枚なら、isThiefMode と isKaraageMode を false にして処理をしない
+                    if (unflippedCards.length === 0) {
+                        scores[currentPlayer] += 2;
+                        break;
+                    }
+                    else {
+                        isProcessing = false;
+                        isThiefMode = true;
 
+                        // カードが選ばれるのを待つ
+                        await new Promise(resolve => {
+                            resolveThiefSelect = resolve;
+                        });
+                        // ↓カード選択後の処理
+                        isThiefMode = false;
+                        await thiefEffect(index);
+                        scores[currentPlayer] += 2;
+                        break;
+                    }
 
-                    // カードが選ばれるのを待つ
-                    await new Promise(resolve => {
-                        resolveThiefSelect = resolve;
-                    });
-
-                    // ↓カード選択後の処理
-                    isThiefMode = false;
-                    await thiefEffect(index);
-                    scores[currentPlayer] += 2;
-                    break;
                 case "king":
                     // 現在のプレイヤーのスコアを取得
                     let currentPlayerScore = scores[currentPlayer];
@@ -727,6 +1209,24 @@
                     break;
 
                 case "special":
+                    // 残りカードが2枚なら、isThiefMode と isKaraageMode を false にして処理をしない
+                    if (unflippedCards.length === 0) {
+                        scores[currentPlayer] += 2;
+                        break;
+                    } else {
+                        isProcessing = false;
+                        isKaraageMode = true;
+                        scores[currentPlayer] += 2;
+                        await db.collection("games").doc(gameId).update({ scores });
+                        // カードが選ばれるのを待つ
+                        await new Promise(resolve => {
+                            resolveThiefSelect = resolve;
+                        });
+                        isKaraageMode = false;
+                        // ↓カード選択後の処理
+                        await specialEffect(index);
+                        break;
+                    }
                     isProcessing = false;
                     isKaraageMode = true;
                     scores[currentPlayer] += 2;
@@ -740,8 +1240,113 @@
                     await specialEffect(index);
 
                     break;
+                case "elf":
+                    scores[currentPlayer] += 2;
+                    shuffleRemainingCardsOnly(data.cards, data.matchedIndices, data.flipped, false);
+                    await db.collection("games").doc(gameId).update({
+                        cards: data.cards,
+                    });
+                    break;
+
             }
         }
+        function EFFECT() {
+            db.collection("games").doc(gameId).onSnapshot((doc) => {
+                const data = doc.data();
+                const effect = data.latestEffect;
+                if (!effect) return;
+                const effectKey = effect.cardType + "_" + effect.timestamp;
+                if (effect && effectKey !== lastSeenEffectKey) {
+                    lastSeenEffectKey = effectKey;
+                    showCardEffect(effect.cardType);
+                }
+            });
+
+        }
+        function SpecialEffects() {
+            db.collection("games").doc(gameId)
+                .onSnapshot((doc) => {
+                    const data = doc.data();
+                    const effect = data.Effect;
+
+                    if (effect && effect.timestamp !== lastEffectTimestamp) {
+                        lastEffectTimestamp = effect.timestamp;
+
+                        // エフェクトを画面に表示
+                        showEffectModal(effect.image, effect.text);
+                    }
+                });
+
+        }
+
+        async function elfEffect() {
+            await db.collection("games").doc(gameId).update({
+                Effect: {
+                    type: "elf",
+                    text: "かわいそ～君たち…残念すぎてｗｗ",
+                    image: "elf.png",
+                    timestamp: Date.now()
+                }
+            });
+        }
+        async function devilEffect() {
+            await db.collection("games").doc(gameId).update({
+                Effect: {
+                    type: "devil",
+                    text: "まだすやすや寝とけ",
+                    image: "devil.png",
+                    timestamp: Date.now()
+                }
+            });
+        }
+        async function skipEffect() {
+            await db.collection("games").doc(gameId).update({
+                Effect: {
+                    type: "skip",
+                    text: "もう一回！ばちこりじゃ！",
+                    image: "skip.png",
+                    timestamp: Date.now()
+                }
+            });
+        }
+
+        async function karaageeEffect() {
+            await db.collection("games").doc(gameId).update({
+                Effect: {
+                    type: "karaage",
+                    text: "まだまだお腹すいちゃってるぅぅ",
+                    image: "karaage.png",
+                    timestamp: Date.now()
+                }
+            });
+        }
+
+
+        async function finishkaraage2Effect() {
+            await db.collection("games").doc(gameId).update({
+                Effect: {
+                    type: "finishKaraage",
+                    text: "大大大満足！！",
+                    image: "karaage.png",
+                    timestamp: Date.now()
+                }
+            });
+        }
+
+        function showEffectModal(imageSrc, text) {
+            const effectImage = document.getElementById("effectImage");
+            const effectText = document.getElementById("effectText");
+            const modal = document.getElementById("effectModal");
+
+            effectImage.src = imageSrc;
+            effectText.innerText = text;
+
+            modal.classList.remove("hidden");
+            setTimeout(() => {
+                modal.classList.add("hidden");
+            }, 2000);
+        }
+
         function showCardEffect(cardType) {
             const effectImage = document.getElementById("effectImage");
             const effectText = document.getElementById("effectText");
@@ -752,10 +1357,9 @@
             effectText.innerText = getCardEffectText(cardType); // 効果説明（↓関数作る）
 
             modal.classList.remove("hidden");
-            modal.addEventListener("click", () => {
+            setTimeout(() => {
                 modal.classList.add("hidden");
-            });
-
+            }, 2000);
         }
 
         // 効果説明をカードの種類に応じて返す
@@ -764,11 +1368,15 @@
                 case "bomb":
                     return "こんなところに爆弾が…得点が。おつかれ";
                 case "heart":
-                    return "何の変哲もないカード。ただの一点。無味無臭";
+                    return "何の変哲もないカード。ただの１点。ゴミ";
+                case "diamond":
+                    return "何の変哲もないカード。ただの１点。カス";
+                case "spade":
+                    return "何の変哲もないカード。ただの１点。雑魚";
                 case "special":
-                    return "無味のカードが、からあげ味に！？食べつくせ";
+                    return "雑魚のカードが、からあげ味に！？食べつくせ";
                 case "crowbar":
-                    return "何の変哲もないカード。ただの一点。無味無臭";
+                    return "何の変哲もないカード。ただの１点。草";
                 case "1":
                     return "コツコツ1点！";
                 case "2":
@@ -776,19 +1384,19 @@
                 case "3":
                     return "これはレアだ。この運命に乾杯！";
                 case "angel":
-                    return "天使が僕の下に…？ありがたや";
+                    return "天使が僕の下に…？かわいい…";
                 case "devil":
                     return "とぅ。悪魔参上だ！やっぱ悪さ最高だぜぇぇ";
                 case "skip":
-                    return "次の人何もできないね。どんまい。";
+                    return "大丈夫。まだ戦えるよ。";
                 case "revo":
                     return "革命の火をあげろぉぉぉ。弱者に救いを";
                 case "king":
                     return "吾が王だ。皆の者すべてよこせ";
                 case "thief":
                     return "どんなカードでも奪ってきまっせ。任せてくだせぇ";
-                case "karaage":
-                    return "うめぇよぉ。まだまだ食わしてくれぇ";
+                case "elf":
+                    return "カード分からなくなっちゃったね";
             }
         }
 
@@ -814,56 +1422,67 @@
             const gameDoc = await db.collection("games").doc(gameId).get();
             const data = gameDoc.data();
 
-            const totalCards = cards.length;
+            const totalCards = data.cards.length;
             const matched = data.matchedIndices || [];
-
             if (matched.length === totalCards) {
+                await db.collection("games").doc(gameId).update({
+                    gameOver: true
+                });
                 await showGameOver();
             }
+            db.collection("games").doc(gameId)
+                .onSnapshot((doc) => {
+                    const data = doc.data();
+                    if (data?.gameOver) {
+                        showGameOver();
+                    }
+                });
         }
-
 
         async function showGameOver() {
-            const finalScoreEl = document.getElementById("finalScore");
+            setTimeout(async () => {
+                const finalScoreEl = document.getElementById("finalScore");
 
-            const gameDoc = await db.collection("games").doc(gameId).get();
-            const data = gameDoc.data();
+                const gameDoc = await db.collection("games").doc(gameId).get();
+                const data = gameDoc.data();
 
-            // PName と scores を取得
-            const PName = data.PName;
-            const scores = data.scores;
-            // scores と PName を使って [{name, score}] の配列を作る
-            const rankingArray = Object.entries(scores).map(([playerNum, score]) => {
-                const name = PName[playerNum] ?? `プレイヤー${playerNum}`;
-                return { name, score };
-            });
+                // PName と scores を取得
+                const PName = data.PName;
+                const scores = data.scores;
+                // scores と PName を使って [{name, score}] の配列を作る
+                const rankingArray = Object.entries(scores).map(([playerNum, score]) => {
+                    const name = PName[playerNum] ?? `プレイヤー${playerNum}`;
+                    return { name, score };
+                });
 
-            // スコア降順でソート
-            rankingArray.sort((a, b) => b.score - a.score);
+                // スコア降順でソート
+                rankingArray.sort((a, b) => b.score - a.score);
 
-            // 表示用の文字列を生成
-            const rankingList = rankingArray
-                .map((entry, index) => {
-                    const style = index === 0 ? 'style="color: red;"' : '';
-                    return `<li ${style}>${index + 1}位: ${entry.name}（${entry.score} ペア）</li>`;
-                })
-                .join(""); // <li>要素の文字列を結合
+                // 表示用の文字列を生成
+                const rankingList = rankingArray
+                    .map((entry, index) => {
+                        const style = index === 0 ? 'style="color: red;"' : '';
+                        return `<li ${style}>${index + 1}位: ${entry.name}（${entry.score} ペア）</li>`;
+                    })
+                    .join(""); // <li>要素の文字列を結合
 
-            // 最終的なリストを finalScore の要素に挿入
-            finalScoreEl.innerHTML = `<ul>${rankingList}</ul>`;
+                // 最終的なリストを finalScore の要素に挿入
+                finalScoreEl.innerHTML = `<ul>${rankingList}</ul>`;
 
-            // 文字を大きくするスタイル
-            finalScoreEl.style.fontSize = "24px"; // サイズ調整
-            finalScoreEl.style.lineHeight = "1.5"; // 行間の調整
-            finalScoreEl.style.listStyleType = "none"; // 黒点を除去
-            finalScoreEl.style.paddingLeft = "20px"; // 左にパディングを追加してインデント
-            finalScoreEl.style.color = "#333"; // 文字の色を変更
+                // 文字を大きくするスタイル
+                finalScoreEl.style.fontSize = "24px"; // サイズ調整
+                finalScoreEl.style.lineHeight = "1.5"; // 行間の調整
+                finalScoreEl.style.listStyleType = "none"; // 黒点を除去
+                finalScoreEl.style.paddingLeft = "20px"; // 左にパディングを追加してインデント
+                finalScoreEl.style.color = "#333"; // 文字の色を変更
 
-            // ul 要素を左揃え
-            const ul = finalScoreEl.querySelector('ul');
-            ul.style.textAlign = 'left'; // 左揃え
-            document.getElementById("gameOverModal").style.display = "flex";
+                // ul 要素を左揃え
+                const ul = finalScoreEl.querySelector('ul');
+                ul.style.textAlign = 'left'; // 左揃え
+                document.getElementById("gameOverModal").style.display = "flex";
+            }, 2000);  // 1000ミリ秒（1秒）後に実行
         }
+
 
 
 
@@ -878,11 +1497,52 @@
 
             await db.collection("games").doc(gameId).update({
                 started: false,
+                gameOver: false,
+                highlightedIndices: [],
                 flipped: [],
                 matchedIndices: [],
-            });
-
+                scores: [],
+                currentPlayer: [],
+                PName: [],
+                cardImages: cardImages,
+                Effect: firebase.firestore.FieldValue.delete(),
+                latestEffect: firebase.firestore.FieldValue.delete()
+            }, { merge: true });
         }
+        async function leaveGame() {
+            if (!gameId || !playerId) return;
+
+            const playerRef = db.collection("games").doc(gameId).collection("players").doc(playerId);
+            const playerSnap = await playerRef.get();
+            const playerData = playerSnap.data();
+
+            // プレイヤー削除
+            await playerRef.delete();
+
+            // ホストなら、他の誰かをホストにする
+            if (playerData?.isHost) {
+                const playersSnapshot = await db.collection("games").doc(gameId).collection("players").get();
+                if (!playersSnapshot.empty) {
+                    const nextHost = playersSnapshot.docs[0];
+                    await nextHost.ref.update({ isHost: true });
+                }
+            }
+
+            // 全員が抜けたか確認
+            await checkIfGameEmptyAndDelete();
+            await updateHostUI();
+
+            // ロビー画面から退出
+            window.location.reload(); // またはホーム画面に戻す処理など
+            window.addEventListener("beforeunload", async () => {
+                await leaveGame();
+            });
+        }
+        async function updateHostUI() {
+            // ホストが変更された後にUIを更新
+            await checkIfHost(); // 新しいホスト情報を確認してUIに反映
+        }
+
 
 
 
@@ -897,6 +1557,27 @@
             await db.collection("games").doc(gameId).delete();
             location.reload();
         }
+        async function checkIfGameEmptyAndDelete() {
+            const playersRef = db.collection("games").doc(gameId).collection("players");
+            const playersSnapshot = await playersRef.get();
+
+            if (playersSnapshot.empty) {
+                // プレイヤーがいなければゲームを削除
+                await db.collection("games").doc(gameId).delete();
+                location.reload();  // ゲームが削除された後、ページをリロード
+            }
+        }
+        document.getElementById("gameIdInput").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                joinGame();
+            }
+        });
+
+        document.getElementById("playerNameInput").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                enterLobby();
+            }
+        });
 
     </script>
 </body>
