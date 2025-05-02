@@ -165,14 +165,6 @@
             transition: all 0.3s;
         }
 
-
-
-
-
-
-
-
-
         .card-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -467,32 +459,58 @@
             playerName = document.getElementById("playerNameInput").value.trim();
             if (!playerName) return alert("名前を入力してください");
 
-            playerId = `player_${Date.now()}`;
             const gameRef = db.collection("games").doc(gameId);
             const playersRef = gameRef.collection("players");
 
-            // ゲームドキュメントを作成・更新（started フラグ）
-            await gameRef.set({ started: false }, { merge: true });
+            const gameSnap = await gameRef.get();
+            const gameData = gameSnap.data();
 
-            // 現在のプレイヤー数を取得
-            const snapshot = await playersRef.get();
-            const isHost = snapshot.empty; // 最初のプレイヤーならホスト
-
-            // プレイヤー情報を保存
-            await playersRef.doc(playerId).set({
-                name: playerName,
-                isHost: isHost
-            });
-            await checkIfHost();
-            if (isHost) {
-                await updateHostStatus();
+            // ゲームドキュメントを作成・更新（started フラグは初期 false）
+            if (!gameData || gameData.started === undefined) {
+                await gameRef.set({ started: false }, { merge: true });
             }
 
+            // 同じ名前のプレイヤーがすでに存在するか確認（復帰対応）
+            const snapshot = await playersRef.where("name", "==", playerName).get();
+
+            if (!snapshot.empty) {
+                // 再接続: 既存プレイヤーとして playerId を取得
+                playerId = snapshot.docs[0].id;
+            } else {
+                // 新規プレイヤー作成
+                playerId = `player_${Date.now()}`;
+                const allPlayersSnap = await playersRef.get();
+                isHost = allPlayersSnap.empty;
+
+                await playersRef.doc(playerId).set({
+                    name: playerName,
+                    isHost: isHost
+                });
+
+                if (isHost) {
+                    await updateHostStatus();
+                }
+            }
+
+            await checkIfHost();
             listenToCardSelectionStatus();
-            listenToLobby(); // ロビー監視（名前一覧など）
-            document.getElementById("nameInputSection").style.display = "none";
-            document.getElementById("lobbySection").style.display = "block";
+            listenToLobby(); // ロビー表示・更新
+
+            // 🔥 ここでゲームが始まっていたら、即ゲーム画面に復帰
+            if (gameData && gameData.started) {
+
+                // 復帰：ゲーム画面へ移行
+                document.getElementById("nameInputSection").style.display = "none";
+                document.getElementById("lobbySection").style.display = "none";
+                startGame(); // ← この関数で listenToGameState などが呼ばれる想定
+            } else {
+                // 通常ロビー表示
+                document.getElementById("nameInputSection").style.display = "none";
+                document.getElementById("lobbySection").style.display = "block";
+            }
         }
+
+
 
         async function updateHostStatus() {
             const gameRef = db.collection("games").doc(gameId);
@@ -537,7 +555,6 @@
 
         // ロビー画面にカード選択セクションを表示
         function showCardSelection() {
-            selectedCards = [];
             // 表示用のカードリスト
             const cards = [
                 "1", "2", "3",
@@ -605,9 +622,13 @@
             await db.collection("games").doc(gameId).update({
                 selectingCards: false
             });
+            selectedCards = [];
+            const container = document.getElementById("cardSelectionContainer");
+            container.innerHTML = "";
+            const form = document.getElementById("cardSelectionForm");
+            form.reset();
             document.getElementById("cardSelectionSection").style.display = "none";
             document.getElementById("lobbySection").style.display = "block";
-
         }
 
         // カード選択フォームが送信された際に呼ばれる
@@ -722,75 +743,71 @@
         let gameStateUnsubscribe = null;
         function listenToGameState() {
             if (gameStateUnsubscribe) return;
+
             gameStateUnsubscribe = db.collection("games").doc(gameId).onSnapshot(doc => {
                 const data = doc.data();
                 if (!data) return;
                 cards = data.cards;
-                PName = data.Pname;
+                PName = data.PName; // ← typoに注意！（Pname → PName）
                 scores = data.scores;
                 currentPlayer = data.currentPlayer;
                 flippedCards = data.flipped;
-                renderBoard(cards, flippedCards);
+                const matched = data.matchedIndices || [];
+                const highlighted = data.highlightedIndices || [];
+
+                renderBoard(cards, flippedCards, matched, highlighted, currentPlayer, PName);
+
                 if (data.cardImages) {
                     cardImages = data.cardImages;
                     updateCardImagesOnScreen();
                 }
+
                 updateSP();
             });
         }
 
-        function renderBoard(cards, flipped) {
+
+        function renderBoard(cards, flipped, matched, highlighted, currentPlayerNum, PName) {
             const gameBoard = document.getElementById("gameBoard");
-            const scoreBoard = document.getElementById("scores"); // ← 追加
+            const scoreBoard = document.getElementById("scores");
             gameBoard.innerHTML = "";
-            scoreBoard.innerHTML = ""; // ← スコアも消す
+            scoreBoard.innerHTML = "";
 
-            const img = document.createElement("img");
+            cards.forEach((value, index) => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.dataset.index = index;
+                card.dataset.value = value;
 
+                if (highlighted.includes(index)) {
+                    card.classList.add("highlight-red");
+                }
 
-            db.collection("games").doc(gameId).get().then(doc => {
-                const data = doc.data();
-                const matched = data.matchedIndices || [];
-                const scores = data.scores || {};
-                const currentPlayerNum = data.currentPlayer;
-                const PName = data.PName;
-                const myplayerName = PName[currentPlayerNum];
-                const highlighted = data.highlightedIndices || [];
-
-                // --- カード描画部分 ---
-                cards.forEach((value, index) => {
-                    const card = document.createElement("div");
-                    card.className = "card";
-                    card.dataset.index = index;
-                    card.dataset.value = value;
-
-                    if (highlighted.includes(index)) {
-                        card.classList.add("highlight-red");
+                if (flipped.includes(index) || matched.includes(index)) {
+                    card.classList.add("flipped");
+                    const img = document.createElement("img");
+                    const src = cardImages[value];
+                    if (src) {
+                        img.src = `./${src}`;
+                        img.alt = value;
+                        img.style.width = "100%";
+                        img.style.height = "100%";
+                        card.appendChild(img);
                     }
+                }
 
-                    if (flipped.includes(index) || matched.includes(index)) {
-                        card.classList.add("flipped");
-                        const img = document.createElement("img");
-                        const src = cardImages[value];
-                        if (src) {
-                            img.src = `./${src}`;
-                            img.alt = value; // 画像が読み込めないときの代替テキスト
-                            img.style.width = "100%"; // 必要に応じてサイズ調整
-                            img.style.height = "100%";
-                            card.appendChild(img);
-                        }
+                if (
+                    playerName === PName[currentPlayerNum] &&
+                    !matched.includes(index) &&
+                    !flipped.includes(index)
+                ) {
+                    card.addEventListener("click", () => handleCardClick(card));
+                }
 
-                    } else {
-                    }
-                    if (playerName === myplayerName &&
-                        !matched.includes(index) &&
-                        !flipped.includes(index)) {
-                        card.addEventListener("click", () => handleCardClick(card));
-                    }
-                    gameBoard.appendChild(card);
-                });
+                gameBoard.appendChild(card);
             });
         }
+
         function updateCardImagesOnScreen() {
             document.querySelectorAll(".card.flipped img").forEach(img => {
                 const cardDiv = img.parentElement;
@@ -921,13 +938,11 @@
                 if (data.flipped.length === 3) {
                     data.flipped.splice(0, 1); // 最初の1枚を削除
 
-                    await db.collection("games").doc(gameId).update({
-                        flipped: data.flipped,
-                        scores: scores,
-                    });
-                } else {
-                    // 必要なら他のロジックを書く
                 }
+                await db.collection("games").doc(gameId).update({
+                    flipped: data.flipped,
+                    scores: scores,
+                });
             }
         }
         async function getNextPlayer(currentPlayer, numPlayers, data, gameId) {
