@@ -1224,25 +1224,50 @@
                     scores[currentPlayer] += 3;
                     break;
                 case "angel":
-                    scores[currentPlayer] += 4;
+                    scores[currentPlayer] += 5;
                     break;
                 case "devil": {
-                    const random = Math.random(); // 0〜1のランダムな数（0.5未満なら前者、0.5以上なら後者）
+                    const random = Math.random(); // 0〜1のランダムな数
 
-                    if (random < 0.5) {
-                        // スコアを -3 する（最小0に制限しておくのが一般的）
-                        scores[currentPlayer] = Math.max(0, scores[currentPlayer] - 3);
+                    if (random < 0.10) {
+                        // 🔥 10% 全員のスコアを 0 にする
+                        for (let player = 1; player <= numPlayers; player++) {
+                            scores[player] = 0;
+                        }
                         await db.collection("games").doc(gameId).update({
                             scores: scores
                         });
-                    } else {
-                        // 一回休み → skippedPlayers に追加
+
+                    } else if (random < 0.35) {
+                        // 💀 25% 自分のスコアを 0 にする
+                        scores[currentPlayer] = 0;
+                        await db.collection("games").doc(gameId).update({
+                            scores: scores
+                        });
+
+                    } else if (random < 0.60) {
+                        // ⚡ 25% 自分のスコアを -4（最低0）
+                        scores[currentPlayer] = Math.max(0, scores[currentPlayer] - 4);
+                        await db.collection("games").doc(gameId).update({
+                            scores: scores
+                        });
+
+                    } else if (random < 0.99) {
+                        // 💤 40% 一回休み
                         await db.collection("games").doc(gameId).update({
                             skippedPlayers: firebase.firestore.FieldValue.arrayUnion(currentPlayer)
                         });
                     }
+                    else {
+                        scores[currentPlayer] += 90;
+                        await db.collection("games").doc(gameId).update({
+                            scores: scores
+                        });
+                    }
+
                     break;
                 }
+
 
 
                 case "revo":
@@ -1259,9 +1284,10 @@
 
                     break;
                 case "skip":
-                    scores[currentPlayer]++;
+                    scores[currentPlayer] += 2;
                     await db.collection("games").doc(gameId).update({
-                        extraTurnAfterMiss: currentPlayer
+                        extraTurnAfterMiss: currentPlayer,
+                        scores: scores
                     });
                     break;
 
@@ -1294,10 +1320,12 @@
                     // 他のプレイヤーのスコアを加算し、現在のプレイヤー以外のスコアをゼロにする
                     for (let playerNum = 1; playerNum <= numPlayers; playerNum++) {
                         if (playerNum !== currentPlayer) {
-                            currentPlayerScore += scores[playerNum]; // 他のプレイヤーのスコアを加算
-                            scores[playerNum] = 0; // 他のプレイヤーのスコアをゼロにする
+                            const stolen = Math.floor(scores[playerNum] / 2); // 切り捨てで半分
+                            scores[playerNum] -= stolen; // 相手のスコアから奪う
+                            currentPlayerScore += stolen; // 奪ったスコアを自分に加算
                         }
                     }
+
 
                     // 現在のプレイヤーのスコアを更新
                     scores[currentPlayer] = currentPlayerScore;
