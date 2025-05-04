@@ -1238,15 +1238,15 @@
                             scores: scores
                         });
 
-                    } else if (random < 0.35) {
-                        // 💀 25% 自分のスコアを 0 にする
+                    } else if (random < 0.30) {
+                        // 💀 20% 自分のスコアを 0 にする
                         scores[currentPlayer] = 0;
                         await db.collection("games").doc(gameId).update({
                             scores: scores
                         });
 
                     } else if (random < 0.60) {
-                        // ⚡ 25% 自分のスコアを -4（最低0）
+                        // ⚡ 30% 自分のスコアを -4（最低0）
                         scores[currentPlayer] = Math.max(0, scores[currentPlayer] - 4);
                         await db.collection("games").doc(gameId).update({
                             scores: scores
@@ -1368,6 +1368,7 @@
                     shuffleRemainingCardsOnly(data.cards, data.matchedIndices, data.flipped, false);
                     await db.collection("games").doc(gameId).update({
                         cards: data.cards,
+                        scores: scores,
                     });
                     break;
 
