@@ -192,11 +192,27 @@
         }
 
         /* ボタンスタイル */
-        #cardSelectionForm button {
+        #confirmCardBtn {
             margin-top: 30px;
             padding: 12px 24px;
             font-size: 20px;
             background-color: #4CAF50;
+            /* 緑 */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        #randomCardBtn {
+            margin-top: 30px;
+            padding: 12px 24px;
+            font-size: 20px;
+            background-color: #b97b51;
+            /* 茶色系 */
             color: white;
             border: none;
             border-radius: 8px;
@@ -207,7 +223,7 @@
         }
 
         #cardSelectionForm button:hover {
-            background-color: #45a049;
+            background-color: #5a1488;
         }
 
         /* スマホ画面用の調整 */
@@ -290,6 +306,16 @@
             /* 枠線を変更 */
         }
 
+        #randomCardBtn:disabled {
+            cursor: not-allowed;
+            /* 禁止カーソル */
+            background-color: #ccc;
+            /* ボタンの背景色を変更 */
+            color: #0c0c0c;
+            /* ボタンの文字色を変更 */
+            border: 1px solid #999;
+            /* 枠線を変更 */
+        }
         /* ボタンが無効になったとき、マウスオーバー時にカーソルを禁止に変更 */
         /* confirmCardBtn のみに適用 */
         #confirmCardBtn:disabled {
@@ -297,7 +323,7 @@
             /* 禁止カーソル */
             background-color: #ccc;
             /* ボタンの背景色を変更 */
-            color: #666;
+            color: #2b2323;
             /* ボタンの文字色を変更 */
             border: 1px solid #999;
             /* 枠線を変更 */
@@ -360,7 +386,13 @@
         <h3>カードを選択してください</h3>
         <form id="cardSelectionForm" onsubmit="return false;">
             <div id="cardSelectionContainer" class="card-container"></div>
-            <button id="confirmCardBtn" onclick="backlobby()" disabled>カードを決定</button>
+            <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+                <button id="confirmCardBtn" onclick="backlobby()" disabled>カードを決定</button>
+                <button id="randomCardBtn" onclick="generateRandomCards()" disabled>ランダム</button>
+                <label for="pairCountInput">ペア数:</label>
+                <input type="number" id="pairCountInput" style="width: 60px;" />
+            </div>
+
         </form>
     </div>
 
@@ -440,9 +472,11 @@
             if (data && data.isHost) {
                 document.getElementById("startGameBtn").disabled = false;
                 document.getElementById("confirmCardBtn").disabled = false;
+                document.getElementById("randomCardBtn").disabled = false;
             } else {
                 document.getElementById("startGameBtn").disabled = true;
                 document.getElementById("confirmCardBtn").disabled = true;
+                document.getElementById("randomCardBtn").disabled = true;
             }
         }
 
@@ -547,14 +581,14 @@
         }
         async function requestCardSelection() {
             event.preventDefault();
-            await db.collection("games").doc(gameId).update({
+            await db.collection("games").doc(gameId).set({
                 selectedCards: [],
                 selectingCards: true,
-            }, { merge: true });
+            });
         }
 
         // ロビー画面にカード選択セクションを表示
-        function showCardSelection() {
+        async function showCardSelection() {
             // 表示用のカードリスト
             const cards = [
                 "1", "2", "3",
@@ -567,6 +601,7 @@
 
             const cardSelectionContainer = document.getElementById("cardSelectionContainer");
             cardSelectionContainer.innerHTML = "";
+            document.getElementById("pairCountInput").value = "";
 
             // 各カードに対応する画像と入力フィールドを作成
             cards.forEach(card => {
@@ -602,6 +637,49 @@
             document.getElementById("cardSelectionSection").style.display = "block";
             document.getElementById("lobbySection").style.display = "none";
         }
+
+        async function generateRandomCards() {
+            const cards = [
+                "1", "2", "3",
+                "heart", "crowbar", "diamond", "spade",
+                "bomb", "special",
+                "skip", "devil",
+                "angel", "thief",
+                "king", "revo", "elf"
+            ];
+            const selectedCards = [];
+            const maxPairs = parseInt(document.getElementById("pairCountInput").value);
+
+            // 最初に1回だけシャッフル
+            shuffle(cards);
+            let i = 0;
+            const rcards = cards
+            while (selectedCards.length < maxPairs * 2) {
+                const card = rcards[i % rcards.length]; // リストを繰り返し使う
+                if (Math.random() < 0.5) {
+                    selectedCards.push(card, card);
+                    while (Math.random() < 0.40 && selectedCards.length < maxPairs * 2) {
+                        selectedCards.push(card, card);
+                    }
+                }
+                i++;
+            }
+            await db.collection("games").doc(gameId).update({
+                selectedCards: selectedCards,
+                selectingCards: false
+
+            });
+            selectedCards = [];
+            const container = document.getElementById("cardSelectionContainer");
+            container.innerHTML = "";
+            document.getElementById("pairCountInput").value = "";
+            const form = document.getElementById("cardSelectionForm");
+            form.reset();
+            document.getElementById("cardSelectionSection").style.display = "none";
+            document.getElementById("lobbySection").style.display = "block";
+        }
+
+
         function listenToCardSelectionStatus() {
             db.collection("games").doc(gameId).onSnapshot(doc => {
                 const data = doc.data();
@@ -617,14 +695,15 @@
         }
         async function backlobby() {
             event.preventDefault();
-            handleCardSelection(event)
-            saveSelectedCardsToFirebase(selectedCards);
+            await handleCardSelection(event)
             await db.collection("games").doc(gameId).update({
-                selectingCards: false
+                selectingCards: false,
+                selectedCards: selectedCards
             });
             selectedCards = [];
             const container = document.getElementById("cardSelectionContainer");
             container.innerHTML = "";
+            document.getElementById("pairCountInput").value = "";
             const form = document.getElementById("cardSelectionForm");
             form.reset();
             document.getElementById("cardSelectionSection").style.display = "none";
@@ -646,13 +725,6 @@
                     }
                 }
             });
-        }
-
-        // Firebaseに選ばれたカードを保存する関数
-        async function saveSelectedCardsToFirebase(selectedCards) {
-            await db.collection("games").doc(gameId).set({
-                selectedCards: selectedCards
-            }, { merge: true });
         }
 
 
