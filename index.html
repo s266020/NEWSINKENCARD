@@ -316,6 +316,7 @@
             border: 1px solid #999;
             /* 枠線を変更 */
         }
+
         /* ボタンが無効になったとき、マウスオーバー時にカーソルを禁止に変更 */
         /* confirmCardBtn のみに適用 */
         #confirmCardBtn:disabled {
@@ -999,12 +1000,19 @@
                 const matched = data.matchedIndices || [];
 
                 // 他の未発見のbombを探して追加
-                const additionalFlips = cards
+                const remainingBombs = cards
                     .map((val, idx) => ({ val, idx }))
-                    .filter(obj => obj.val === "bomb" && !data.flipped.includes(obj.idx) && !matched.includes(obj.idx))
-                    .map(obj => obj.idx);
+                    .filter(obj =>
+                        obj.val === "bomb" &&
+                        !data.flipped.includes(obj.idx) &&
+                        !matched.includes(obj.idx) &&
+                        obj.idx !== index // 今回めくった bomb 自体は除く
+                    );
 
-                data.flipped.push(...additionalFlips);
+                if (remainingBombs.length > 0) {
+                    const randomBomb = remainingBombs[Math.floor(Math.random() * remainingBombs.length)];
+                    data.flipped.push(randomBomb.idx);
+                }
 
                 // 3枚めくられた場合、最初のカード（非bomb）を裏返す
                 if (data.flipped.length === 3) {
