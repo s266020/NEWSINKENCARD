@@ -6,12 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>オンライン神経衰弱</title>
     <style>
-        .game-board {
+        #gameBoard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 8px;
-            padding: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            padding: 20px;
+            background-image: url('./ground.jpg');
+            /* 背景画像のパス */
+            background-size: cover;
+            background-position: center;
         }
+
 
         .card {
             aspect-ratio: 5 / 7;
@@ -20,7 +25,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: black;
+            background-color: rgb(141, 140, 140);
             cursor: pointer;
         }
 
@@ -207,21 +212,6 @@
             max-width: 300px;
         }
 
-        #randomCardBtn {
-            margin-top: 30px;
-            padding: 12px 24px;
-            font-size: 20px;
-            background-color: #b97b51;
-            /* 茶色系 */
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            width: 80%;
-            max-width: 300px;
-        }
-
         #cardSelectionForm button:hover {
             background-color: #5a1488;
         }
@@ -306,17 +296,6 @@
             /* 枠線を変更 */
         }
 
-        #randomCardBtn:disabled {
-            cursor: not-allowed;
-            /* 禁止カーソル */
-            background-color: #ccc;
-            /* ボタンの背景色を変更 */
-            color: #0c0c0c;
-            /* ボタンの文字色を変更 */
-            border: 1px solid #999;
-            /* 枠線を変更 */
-        }
-
         /* ボタンが無効になったとき、マウスオーバー時にカーソルを禁止に変更 */
         /* confirmCardBtn のみに適用 */
         #confirmCardBtn:disabled {
@@ -389,9 +368,6 @@
             <div id="cardSelectionContainer" class="card-container"></div>
             <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
                 <button id="confirmCardBtn" onclick="backlobby()" disabled>カードを決定</button>
-                <button id="randomCardBtn" onclick="generateRandomCards()" disabled>ランダム</button>
-                <label for="pairCountInput">ペア数:</label>
-                <input type="number" id="pairCountInput" style="width: 60px;" />
             </div>
 
         </form>
@@ -441,6 +417,8 @@
             "1": "1.png",
             "2": "2.png",
             "3": "3.png",
+            "tunami": "tunami.png",
+            "quake": "quake.png",
         };
         let isThiefMode = false;        // 泥棒効果中かどうか
         let resolveThiefSelect = null;
@@ -473,11 +451,9 @@
             if (data && data.isHost) {
                 document.getElementById("startGameBtn").disabled = false;
                 document.getElementById("confirmCardBtn").disabled = false;
-                document.getElementById("randomCardBtn").disabled = false;
             } else {
                 document.getElementById("startGameBtn").disabled = true;
                 document.getElementById("confirmCardBtn").disabled = true;
-                document.getElementById("randomCardBtn").disabled = true;
             }
         }
 
@@ -597,13 +573,11 @@
                 "bomb", "special",
                 "skip", "devil",
                 "angel", "thief",
-                "king", "revo", "elf"
+                "king", "revo", "elf", "tunami", "quake", "random",
             ];
 
             const cardSelectionContainer = document.getElementById("cardSelectionContainer");
             cardSelectionContainer.innerHTML = "";
-            document.getElementById("pairCountInput").value = "";
-
             // 各カードに対応する画像と入力フィールドを作成
             cards.forEach(card => {
                 // カードを表示するためのラッパーを作成
@@ -639,46 +613,34 @@
             document.getElementById("lobbySection").style.display = "none";
         }
 
-        async function generateRandomCards() {
+        function generateRandomCards(randomPairs) {
             const cards = [
                 "1", "2", "3",
                 "heart", "crowbar", "diamond", "spade",
                 "bomb", "special",
                 "skip", "devil",
                 "angel", "thief",
-                "king", "revo", "elf"
+                "king", "revo", "elf", "tunami", "quake",
             ];
-            const selectedCards = [];
-            const maxPairs = parseInt(document.getElementById("pairCountInput").value);
-
+            const selected = [];
             // 最初に1回だけシャッフル
             shuffle(cards);
             let i = 0;
             const rcards = cards
-            while (selectedCards.length < maxPairs * 2) {
+            while (selected.length < randomPairs * 2) {
                 const card = rcards[i % rcards.length]; // リストを繰り返し使う
                 if (Math.random() < 0.5) {
-                    selectedCards.push(card, card);
-                    while (Math.random() < 0.40 && selectedCards.length < maxPairs * 2) {
-                        selectedCards.push(card, card);
+                    selected.push(card, card);
+                    while (Math.random() < 0.30 && selected.length < randomPairs * 2) {
+                        selected.push(card, card);
                     }
                 }
                 i++;
             }
-            await db.collection("games").doc(gameId).update({
-                selectedCards: selectedCards,
-                selectingCards: false
-
-            });
-            selectedCards = [];
-            const container = document.getElementById("cardSelectionContainer");
-            container.innerHTML = "";
-            document.getElementById("pairCountInput").value = "";
-            const form = document.getElementById("cardSelectionForm");
-            form.reset();
-            document.getElementById("cardSelectionSection").style.display = "none";
-            document.getElementById("lobbySection").style.display = "block";
+            console.log(selected);
+            return selected;
         }
+
 
 
         function listenToCardSelectionStatus() {
@@ -697,14 +659,9 @@
         async function backlobby() {
             event.preventDefault();
             await handleCardSelection(event)
-            await db.collection("games").doc(gameId).update({
-                selectingCards: false,
-                selectedCards: selectedCards
-            });
             selectedCards = [];
             const container = document.getElementById("cardSelectionContainer");
             container.innerHTML = "";
-            document.getElementById("pairCountInput").value = "";
             const form = document.getElementById("cardSelectionForm");
             form.reset();
             document.getElementById("cardSelectionSection").style.display = "none";
@@ -715,16 +672,33 @@
         async function handleCardSelection(event) {
             event.preventDefault();
             const cardInputs = document.querySelectorAll("input[type='number']");
+            const selectedCards = [];
+            let randomPairs = 0;
 
             cardInputs.forEach(input => {
                 const cardName = input.name;
                 const pairCount = parseInt(input.value);
                 if (pairCount > 0) {
-                    for (let i = 0; i < pairCount; i++) {
-                        selectedCards.push(cardName);
-                        selectedCards.push(cardName);  // ペア数分だけカードを追加
+                    if (cardName === "random") {
+                        randomPairs += pairCount;
+                    } else {
+                        for (let i = 0; i < pairCount; i++) {
+                            selectedCards.push(cardName, cardName);
+                        }
                     }
                 }
+            });
+
+            // ランダム分を追加
+            if (randomPairs > 0) {
+                const generated = generateRandomCards(randomPairs);
+                selectedCards.push(...generated);
+            }
+            console.log(selectedCards);
+
+            await db.collection("games").doc(gameId).update({
+                selectingCards: false,
+                selectedCards: selectedCards,
             });
         }
 
@@ -839,18 +813,29 @@
             });
         }
 
-
+        const cardStyles = {};
         function renderBoard(cards, flipped, matched, highlighted, currentPlayerNum, PName) {
             const gameBoard = document.getElementById("gameBoard");
             const scoreBoard = document.getElementById("scores");
             gameBoard.innerHTML = "";
             scoreBoard.innerHTML = "";
+            // ランダムな border-radius の候補（角の丸み）
+            const shapes = ["0%", "10%", "25%", "50%"];
+
 
             cards.forEach((value, index) => {
                 const card = document.createElement("div");
                 card.className = "card";
                 card.dataset.index = index;
                 card.dataset.value = value;
+
+                if (!cardStyles[index]) {
+                    cardStyles[index] = {
+                        shape: shapes[Math.floor(Math.random() * shapes.length)],
+                    };
+                }
+                // 保存されたスタイルを適用
+                card.style.borderRadius = cardStyles[index].shape;
 
                 if (highlighted.includes(index)) {
                     card.classList.add("highlight-red");
@@ -996,6 +981,14 @@
         }
         async function bombeffect(index, data, gameId, cards) {
             scores[currentPlayer] = 0;
+            if (Math.random() < 0.3) {
+                // 80%: 自分のスコアを0に
+                for (let player in scores) {
+                    scores[player] = Math.max(0, scores[player] - 2);
+                }
+            }
+            // 20%: 全プレイヤーのスコアを-1（ただし0未満にはしない）
+
             if (cards[index] === "bomb") {
                 const matched = data.matchedIndices || [];
 
@@ -1131,7 +1124,7 @@
                 flipped.push(...supportIndices.map(obj => obj.idx));
                 const pairIndex = supportIndices[0].idx;
                 const newmatched = [...(data.matchedIndices || []), ...data.flipped, pairIndex];
-                scores[currentPlayer]++;
+                scores[currentPlayer] = +2;
                 await db.collection("games").doc(gameId).update({
                     matchedIndices: newmatched,
                     flipped: [],
@@ -1259,6 +1252,7 @@
                         });
                     }
                     else {
+                        windevilEffect();
                         scores[currentPlayer] += 90;
                         await db.collection("games").doc(gameId).update({
                             scores: scores
@@ -1268,21 +1262,28 @@
                     break;
                 }
 
-
-
-                case "revo":
-                    // revoカードの場合の処理
-                    // すべてのプレイヤーのスコアを均等にする
-                    const totalPlayers = Object.keys(scores).length; // プレイヤー数を取得
-                    const totalScore = Object.values(scores).reduce((a, b) => a + b, 0); // 現在のスコアの合計を計算
-                    const equalScore = Math.floor(totalScore / totalPlayers); // 余りを切り捨てて均等なスコアを計算
-
-                    // 各プレイヤーのスコアを均等に設定
-                    for (let player in scores) {
-                        scores[player] = equalScore;
+                case "revo": {
+                    const random = Math.random();
+                    if (random < 0.6) {
+                        // 30%の確率で自分のスコアを -3
+                        frevoEffect();
+                        scores[currentPlayer] = Math.max(0, scores[currentPlayer] - 2);
+                        await db.collection("games").doc(gameId).update({
+                            scores: scores
+                        });
+                        break;
+                    } else {
+                        // 70%の確率で全員のスコアを均等にする
+                        const totalPlayers = Object.keys(scores).length;
+                        const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+                        const equalScore = Math.floor(totalScore / totalPlayers);
+                        for (let player in scores) {
+                            scores[player] = equalScore;
+                        }
+                        scores[currentPlayer] += 3;
                     }
-
                     break;
+                }
                 case "skip":
                     scores[currentPlayer] += 2;
                     await db.collection("games").doc(gameId).update({
@@ -1313,33 +1314,40 @@
                         break;
                     }
 
-                case "king":
-                    // 現在のプレイヤーのスコアを取得
+                case "king": {
+                    const random = Math.random();
                     let currentPlayerScore = scores[currentPlayer];
-
-                    // 他のプレイヤーのスコアを加算し、現在のプレイヤー以外のスコアをゼロにする
-                    for (let playerNum = 1; playerNum <= numPlayers; playerNum++) {
-                        if (playerNum !== currentPlayer) {
-                            const stolen = Math.floor(scores[playerNum] / 2); // 切り捨てで半分
-                            scores[playerNum] -= stolen; // 相手のスコアから奪う
-                            currentPlayerScore += stolen; // 奪ったスコアを自分に加算
+                    if (random < 0.2) {
+                        fkingEffect();
+                        scores[currentPlayer] = 0;
+                        await db.collection("games").doc(gameId).update({
+                            scores: scores
+                        });
+                        break;
+                    } else {
+                        // 他のプレイヤーのスコアを加算し、現在のプレイヤー以外のスコアをゼロにする
+                        for (let playerNum = 1; playerNum <= numPlayers; playerNum++) {
+                            if (playerNum !== currentPlayer) {
+                                const stolen = Math.floor(scores[playerNum] / 2.3); // 切り捨てで半分
+                                scores[playerNum] -= stolen; // 相手のスコアから奪う
+                                currentPlayerScore += stolen; // 奪ったスコアを自分に加算
+                            }
                         }
+                        // 現在のプレイヤーのスコアを更新
+                        scores[currentPlayer] = currentPlayerScore;
                     }
-
-
-                    // 現在のプレイヤーのスコアを更新
-                    scores[currentPlayer] = currentPlayerScore;
                     break;
+                }
 
                 case "special":
                     // 残りカードが2枚なら、isThiefMode と isKaraageMode を false にして処理をしない
                     if (unflippedCards.length === 0) {
-                        scores[currentPlayer] += 2;
+                        scores[currentPlayer] += 3;
                         break;
                     } else {
                         isProcessing = false;
                         isKaraageMode = true;
-                        scores[currentPlayer] += 2;
+                        scores[currentPlayer] += 3;
                         await db.collection("games").doc(gameId).update({ scores });
                         // カードが選ばれるのを待つ
                         await new Promise(resolve => {
@@ -1371,7 +1379,95 @@
                         scores: scores,
                     });
                     break;
+                case "tunami": {
+                    const penalties = [0, 1, 2, 3, 4, 5, 90];
+                    const weights = [2, 4, 6, 4, 2, 1, 0.3];
 
+                    for (let player in scores) {
+                        const penalty = weightedRandom(penalties, weights);
+                        scores[player] = Math.max(0, scores[player] - penalty);
+                    }
+
+                    await db.collection("games").doc(gameId).update({
+                        scores: scores
+                    });
+
+                    break;
+                }
+                case "quake": {
+                    scores[currentPlayer] += 2;
+                    // ペア候補のマップ作成（カードの種類ごとにまとめる）
+                    const faceDownIndices = data.cards
+                        .map((val, idx) => ({ val, idx }))
+                        .filter(({ idx }) =>
+                            !data.flipped.includes(idx) &&
+                            !matched.includes(idx)
+                        );
+
+                    // カードの種類ごとに分類
+                    const valueMap = {};
+                    faceDownIndices.forEach(({ val, idx }) => {
+                        if (!valueMap[val]) valueMap[val] = [];
+                        valueMap[val].push(idx);
+                    });
+
+                    const usedIndices = new Set();
+                    const nonOverlappingPairs = [];
+
+                    for (const val in valueMap) {
+                        const indices = valueMap[val].filter(idx => !usedIndices.has(idx));
+
+                        // 2枚単位でペアにする
+                        for (let i = 0; i + 1 < indices.length; i += 2) {
+                            const pair = [indices[i], indices[i + 1]];
+                            nonOverlappingPairs.push(pair);
+                            usedIndices.add(indices[i]);
+                            usedIndices.add(indices[i + 1]);
+                        }
+                    }
+
+                    if (nonOverlappingPairs.length === 0) return; // ペアがなければ終了
+
+                    // ランダムなペアを1組選択
+                    // 1〜5の重み付きペア数を決定
+                    const pairCounts = [0, 1, 2, 3, 4, 5];
+                    const weights = [5, 20, 30, 30, 10, 5];
+                    const pairCount = Math.min(nonOverlappingPairs.length, weightedRandom(pairCounts, weights));
+
+                    // ランダムにペアを選択
+                    const selectedPairs = [];
+                    const pairsCopy = [...nonOverlappingPairs]; // 元のペア配列をコピーしてシャッフル・抽出用に使用
+                    const maxSelectablePairs = Math.min(pairCount, pairsCopy.length);
+                    for (let i = 0; i < maxSelectablePairs; i++) {
+                        const index = Math.floor(Math.random() * pairsCopy.length);
+                        selectedPairs.push(pairsCopy.splice(index, 1)[0]); // ランダムに1組取り出して選択
+                    }
+
+                    // 選ばれたカードのインデックスをflattenし、flippedに追加
+                    const newFlipped = selectedPairs.flat();
+                    const updatedFlipped = [...data.flipped, ...newFlipped];
+
+                    // 重複を取り除く（すでにflippedに入っているカードがある場合）
+                    const uniqueFlipped = [...new Set(updatedFlipped)];
+
+                    // Firebaseなどにアップデートする際はこの uniqueFlipped を使用
+                    await db.collection("games").doc(gameId).update({
+                        flipped: uniqueFlipped,
+                        scores: scores,
+                    });
+
+                    break;
+                }
+
+
+            }
+            function weightedRandom(penalties, weights) {
+                const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+                let rand = Math.random() * totalWeight;
+                for (let i = 0; i < penalties.length; i++) {
+                    rand -= weights[i];
+                    if (rand <= 0) return penalties[i];
+                }
             }
         }
         function EFFECT() {
@@ -1402,7 +1498,26 @@
                 });
 
         }
-
+        async function fkingEffect() {
+            await db.collection("games").doc(gameId).update({
+                Effect: {
+                    type: "fking",
+                    text: "余は知らない。知らないのじゃ",
+                    image: "fking.png",
+                    timestamp: Date.now()
+                }
+            });
+        }
+        async function frevoEffect() {
+            await db.collection("games").doc(gameId).update({
+                Effect: {
+                    type: "frevo",
+                    text: "にげろぉ～失敗だ",
+                    image: "frevo.png",
+                    timestamp: Date.now()
+                }
+            });
+        }
         async function elfEffect() {
             await db.collection("games").doc(gameId).update({
                 Effect: {
@@ -1423,6 +1538,17 @@
                 }
             });
         }
+        async function windevilEffect() {
+            await db.collection("games").doc(gameId).update({
+                Effect: {
+                    type: "devil",
+                    text: "くれてやる財宝だ",
+                    image: "devil.png",
+                    timestamp: Date.now()
+                }
+            });
+        }
+
         async function skipEffect() {
             await db.collection("games").doc(gameId).update({
                 Effect: {
@@ -1492,15 +1618,15 @@
                 case "bomb":
                     return "こんなところに爆弾が…得点が。おつかれ";
                 case "heart":
-                    return "何の変哲もないカード。ただの１点。ゴミ";
+                    return "何の変哲もないカード。ただの１点。まだまだ！";
                 case "diamond":
-                    return "何の変哲もないカード。ただの１点。カス";
+                    return "何の変哲もないカード。ただの１点。成長期だ";
                 case "spade":
-                    return "何の変哲もないカード。ただの１点。雑魚";
+                    return "何の変哲もないカード。ただの１点。これからだ";
                 case "special":
                     return "雑魚のカードが、からあげ味に！？食べつくせ";
                 case "crowbar":
-                    return "何の変哲もないカード。ただの１点。草";
+                    return "何の変哲もないカード。まださなぎだ";
                 case "1":
                     return "コツコツ1点！";
                 case "2":
@@ -1521,6 +1647,10 @@
                     return "どんなカードでも奪ってきまっせ。任せてくだせぇ";
                 case "elf":
                     return "カード分からなくなっちゃったね";
+                case "tunami":
+                    return "全員持ち物を捨てて逃げろ――";
+                case "quake":
+                    return "大きい揺れだ！注意して！";
             }
         }
 
