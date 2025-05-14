@@ -1189,7 +1189,7 @@
                 await db.collection("games").doc(gameId).update(updates);
                 // 1秒待つ（1000ミリ秒）
                 finishkaraage2Effect();
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 const nextPlayer = await getNextPlayer(currentPlayer, numPlayers, data, gameId);
                 await db.collection("games").doc(gameId).update({
                     flipped: flipped,
