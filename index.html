@@ -1147,7 +1147,7 @@
                 flipped.push(...supportIndices.map(obj => obj.idx));
                 const pairIndex = supportIndices[0].idx;
                 const newmatched = [...(data.matchedIndices || []), ...data.flipped, pairIndex];
-                scores[currentPlayer] = +2;
+                scores[currentPlayer] += 2;
                 await db.collection("games").doc(gameId).update({
                     matchedIndices: newmatched,
                     flipped: [],
@@ -1366,12 +1366,17 @@
                     // 残りカードが2枚なら、isThiefMode と isKaraageMode を false にして処理をしない
                     if (unflippedCards.length === 0) {
                         scores[currentPlayer] += 3;
+                        await db.collection("games").doc(gameId).update({
+                            scores: scores,
+                        });
                         break;
                     } else {
                         isProcessing = false;
                         isKaraageMode = true;
                         scores[currentPlayer] += 3;
-                        await db.collection("games").doc(gameId).update({ scores });
+                        await db.collection("games").doc(gameId).update({
+                            scores: scores,
+                        });
                         // カードが選ばれるのを待つ
                         await new Promise(resolve => {
                             resolveThiefSelect = resolve;
@@ -1381,19 +1386,6 @@
                         await specialEffect(index);
                         break;
                     }
-                    isProcessing = false;
-                    isKaraageMode = true;
-                    scores[currentPlayer] += 2;
-                    await db.collection("games").doc(gameId).update({ scores });
-                    // カードが選ばれるのを待つ
-                    await new Promise(resolve => {
-                        resolveThiefSelect = resolve;
-                    });
-                    isKaraageMode = false;
-                    // ↓カード選択後の処理
-                    await specialEffect(index);
-
-                    break;
                 case "elf":
                     scores[currentPlayer] += 2;
                     shuffleRemainingCardsOnly(data.cards, data.matchedIndices, data.flipped, false);
