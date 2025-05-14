@@ -1223,7 +1223,7 @@
                     const random = Math.random(); // 0〜1のランダムな数
 
                     if (random < 0.10) {
-                        // 🔥 10% 全員のスコアを 0 にする
+                        // 10% 全員のスコアを 0 にする
                         for (let player = 1; player <= numPlayers; player++) {
                             scores[player] = 0;
                         }
@@ -1231,15 +1231,15 @@
                             scores: scores
                         });
 
-                    } else if (random < 0.30) {
-                        // 💀 20% 自分のスコアを 0 にする
+                    } else if (random < 0.20) {
+                        // 10% 自分のスコアを 0 にする
                         scores[currentPlayer] = 0;
                         await db.collection("games").doc(gameId).update({
                             scores: scores
                         });
 
                     } else if (random < 0.60) {
-                        // ⚡ 30% 自分のスコアを -4（最低0）
+                        // 40% 自分のスコアを -4（最低0）
                         scores[currentPlayer] = Math.max(0, scores[currentPlayer] - 4);
                         await db.collection("games").doc(gameId).update({
                             scores: scores
@@ -1317,7 +1317,7 @@
                 case "king": {
                     const random = Math.random();
                     let currentPlayerScore = scores[currentPlayer];
-                    if (random < 0.2) {
+                    if (random < 0.3) {
                         fkingEffect();
                         scores[currentPlayer] = 0;
                         await db.collection("games").doc(gameId).update({
@@ -1381,7 +1381,7 @@
                     break;
                 case "tunami": {
                     const penalties = [0, 1, 2, 3, 4, 5, 90];
-                    const weights = [2, 4, 6, 4, 2, 1, 0.3];
+                    const weights = [8, 17, 25, 25, 16, 8, 1];
 
                     for (let player in scores) {
                         const penalty = weightedRandom(penalties, weights);
@@ -1716,7 +1716,7 @@
                 const rankingList = rankingArray
                     .map((entry, index) => {
                         const style = index === 0 ? 'style="color: red;"' : '';
-                        return `<li ${style}>${index + 1}位: ${entry.name}（${entry.score} ペア）</li>`;
+                        return `<li ${style}>${index + 1}位: ${entry.name}（${entry.score} 点）</li>`;
                     })
                     .join(""); // <li>要素の文字列を結合
 
