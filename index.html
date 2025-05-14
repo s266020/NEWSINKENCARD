@@ -919,6 +919,7 @@
                     const docment = await db.collection("games").doc(gameId).get();  // ゲームドキュメントを取得
                     const updata = docment.data(); // 通常の一致したカード名を渡す
                     const newMatched = [...(updata.matchedIndices || []), ...updata.flipped];
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     await db.collection("games").doc(gameId).update({
                         currentPlayer: currentPlayer,
                         scores: scores,
@@ -947,25 +948,47 @@
                         } else {
                             nextPlayer = await getNextPlayer(currentPlayer, numPlayers, latestData, gameId);
                         }
-
                         if (remaining <= 6) {
                             const updatedNoMatch = Array.from(new Set([...(latestData.noMatchPlayers || []), currentPlayer]));
 
-                            if (updatedNoMatch.length >= numPlayers) {
-                                shuffleRemainingCardsOnly(currentCards, matched, latestData.flipped, true);
-                                elfEffect();
+                            // シャッフルカウントがまだ設定されていないか確認
+                            const hasShuffleCounter = latestData.shuffleDelayCounter !== undefined;
+
+                            // 一周分のプレイヤーがミスした後
+                            if (updatedNoMatch.length >= numPlayers && !hasShuffleCounter) {
+                                // 0〜(numPlayers - 1) のランダムな遅延をセット
+                                const randomDelay = Math.floor(Math.random() * numPlayers);
                                 await gameRef.update({
-                                    cards: currentCards, // ← シャッフル済み配列を保存
-                                    noMatchPlayers: []
+                                    noMatchPlayers: updatedNoMatch,
+                                    shuffleDelayCounter: randomDelay
                                 });
                             } else {
+                                // まだ一周していない or カウント中
                                 await gameRef.update({
                                     noMatchPlayers: updatedNoMatch
                                 });
                             }
                         }
+                        if (remaining <= 6 && latestData.shuffleDelayCounter !== undefined) {
+                            if (latestData.shuffleDelayCounter <= 0) {
+                                // シャッフルを実行
+                                shuffleRemainingCardsOnly(currentCards, matched, latestData.flipped, true);
+                                elfEffect();
 
+                                await gameRef.update({
+                                    cards: currentCards, // シャッフル後のカード
+                                    noMatchPlayers: [],
+                                    shuffleDelayCounter: firebase.firestore.FieldValue.delete() // カウンター削除
+                                });
+                            } else {
+                                // シャッフルカウントを1減らす
+                                await gameRef.update({
+                                    shuffleDelayCounter: latestData.shuffleDelayCounter - 1
+                                });
+                            }
+                        }
 
+                        await new Promise(resolve => setTimeout(resolve, 500));
                         await gameRef.update({
                             currentPlayer: nextPlayer,
                             flipped: [],
